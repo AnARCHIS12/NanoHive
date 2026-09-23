@@ -1460,6 +1460,11 @@
   }
 
   function ensureConfigNavItem() {
+    if (isGuestSession()) {
+      const existing = document.getElementById('nh-config-nav-item');
+      if (existing) existing.remove();
+      return;
+    }
     const nav = document.querySelector('[aria-label="Config Navigation"]');
     if (!nav) return;
 
@@ -1730,6 +1735,16 @@
     (function () {
       const host = panel.querySelector('#nh-imp-mount');
       if (!host) return;
+      if (!isUserAdmin()) {
+        const impSubhead = host.previousElementSibling ? host.previousElementSibling.previousElementSibling : null;
+        const impHint = host.previousElementSibling;
+        const divider = impSubhead ? impSubhead.previousElementSibling : null;
+        if (impSubhead && impSubhead.classList.contains('nh-subhead')) impSubhead.style.display = 'none';
+        if (impHint && impHint.classList.contains('nh-hint')) impHint.style.display = 'none';
+        if (divider && divider.classList.contains('nh-divider')) divider.style.display = 'none';
+        host.style.display = 'none';
+        return;
+      }
       if (nhIsLocked('showRatings')) {
         host.innerHTML = '<p class="nh-hint" style="margin:0;">' + (T.lockedNote || PANEL_T.en.lockedNote) + '</p>';
         return;
@@ -2484,15 +2499,17 @@
       drawer.appendChild(link);
     });
 
-    const custLink = document.createElement('a');
-    custLink.href = 'javascript:void(0)';
-    custLink.innerHTML = `<span class="material-symbols">palette</span><span class="nh-drawer-label">${panelT().gearLabel || 'Customizations'}</span>`;
-    custLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      document.body.classList.remove('nh-menu-open');
-      openSettingsModal();
-    });
-    drawer.appendChild(custLink);
+    if (!isGuestSession()) {
+      const custLink = document.createElement('a');
+      custLink.href = 'javascript:void(0)';
+      custLink.innerHTML = `<span class="material-symbols">palette</span><span class="nh-drawer-label">${panelT().gearLabel || 'Customizations'}</span>`;
+      custLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.body.classList.remove('nh-menu-open');
+        openSettingsModal();
+      });
+      drawer.appendChild(custLink);
+    }
 
     if (isGuestSession()) {
       const signinLink = document.createElement('a');
@@ -2578,6 +2595,7 @@
     try {
       if (sessionStorage.getItem('nh_guest_active') === '1') return true;
       const u = window.$nuxt && window.$nuxt.$store && window.$nuxt.$store.state.user && window.$nuxt.$store.state.user.user;
+      if (!u && !localStorage.getItem('token')) return true;
       const guestName = (window.NH_SERVER_CONFIG && window.NH_SERVER_CONFIG.guestUsername) || (window.NH_CONFIG && window.NH_CONFIG.guestUsername) || 'guest';
       return !!(u && (u.username === guestName || u.isGuest));
     } catch (e) {
@@ -2630,7 +2648,12 @@
   }
 
   function injectGearButton() {
-    if (document.getElementById('nh-gear-btn')) return;
+    const existing = document.getElementById('nh-gear-btn');
+    if (isGuestSession()) {
+      if (existing) existing.remove();
+      return;
+    }
+    if (existing) return;
     const accountBtn = document.querySelector('#appbar a[href$="/account"]') || document.querySelector('#appbar button[aria-label="Account"]') || document.querySelector('#appbar button[aria-label*="user" i]') || document.querySelector('#appbar .account-btn');
     const statsBtn = document.querySelector('#appbar a[href*="/stats"]');
     const flexRow = document.querySelector('#appbar .flex.h-full.items-center') || document.querySelector('#appbar > div.flex');
@@ -2656,6 +2679,7 @@
   }
 
   function openSettingsModal() {
+    if (isGuestSession()) return;
     let modal = document.getElementById('nh-settings-modal');
     if (modal) { modal.remove(); }
 
@@ -2688,6 +2712,12 @@
   }
 
   function injectSettingsPanel() {
+    if (isGuestSession()) {
+      const ep = document.getElementById('nh-settings-panel');
+      if (ep && !ep.closest('#nh-settings-modal')) ep.remove();
+      setNavActive(false);
+      return;
+    }
     ensureConfigNavItem();
 
     const path = window.location.pathname;
