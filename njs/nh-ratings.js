@@ -541,13 +541,15 @@ function guestSession(r) {
   const cached = (function () {
     try { return JSON.parse(fs.readFileSync('/data/nh/guest-session.json')); } catch (e) { return null; }
   })();
+  const now = Date.now();
   function getJwtExp(tok) {
     try {
       const part = String(tok || '').split('.')[1];
       if (!part) return 0;
       let b64 = part.replace(/-/g, '+').replace(/_/g, '/');
       while (b64.length % 4) b64 += '=';
-      const raw = (typeof Buffer !== 'undefined') ? Buffer.from(b64, 'base64').toString('utf8') : atob(b64);
+      const raw = (typeof Buffer !== 'undefined') ? Buffer.from(b64, 'base64').toString('utf8') : (typeof atob !== 'undefined' ? atob(b64) : '');
+      if (!raw) return 0;
       const payload = JSON.parse(raw);
       return payload && payload.exp ? Number(payload.exp) * 1000 : 0;
     } catch (e) {
