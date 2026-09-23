@@ -1851,6 +1851,7 @@
 
     const bindInput = (id, key) => {
       const el = panel.querySelector(id);
+      if (!el) return null;
       if (nhSettings[key] !== undefined) el.value = nhSettings[key];
       el.addEventListener('input', (e) => {
         nhSettings[key] = el.type === 'number' ? parseInt(e.target.value, 10) : e.target.value;
@@ -1860,7 +1861,6 @@
     };
 
     bindInput('#nh-in-name', 'appName');
-    bindInput('#nh-hc-key', 'hcKey');
     // The logo URL is NOT bound live like the others (#28): a value only lands
     // in the settings (and syncs to the user's other browsers) once it is empty
     // or a usable image source. Anything else just marks the field.
@@ -2263,8 +2263,8 @@
       const NH_TAB_GROUPS = [
         ['look', ['#nh-in-name', '#nh-theme-buttons']],
         ['home', ['#nh-in-carousel', '#nh-togs-rail', '#nh-sel-startpage']],
-        ['book', ['#nh-tog-ratings', '#nh-booksites', '#nh-sel-seriescover', '#nh-hc-key']],
-        ['feat', ['#nh-tog-gsearch', '#nh-tog-familystats', '#nh-tog-autoplay', '#nh-tog-modernfilters']],
+        ['book', ['#nh-tog-ratings', '#nh-booksites', '#nh-sel-seriescover']],
+        ['feat', ['#nh-tog-gsearch', '#nh-tog-autoplay', '#nh-tog-modernfilters']],
       ];
       NH_TAB_GROUPS.forEach((g) => {
         g[1].forEach((sel) => {
@@ -2314,7 +2314,6 @@
         if (card) card.dataset.nhBreak = '1';
       };
       mark('#nh-booksites');
-      mark('#nh-soc-users');
       mark('#nh-sesh-list');
     })();
 
@@ -2324,7 +2323,7 @@
     (function hintPopovers() {
       panel.querySelectorAll('.nh-card p.nh-hint').forEach((h) => {
         if (h.id || !h.textContent.trim()) return;
-        if (h.closest('#nh-hc-miss') || h.closest('#nh-srv-groups') || h.closest('#nh-logo-upload-row')) return;
+        if (h.closest('#nh-srv-groups') || h.closest('#nh-logo-upload-row')) return;
         const card = h.closest('.nh-card');
         // Anchor priority (Pawel: the ? belongs ON the toggle it explains, not
         // piled on the card title): a label/subhead right above; else the
