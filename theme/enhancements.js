@@ -372,7 +372,7 @@
     if (appName && /audiobookshelf/i.test(document.title)) {
       document.title = document.title.replace(/audiobookshelf/ig, appName);
     }
-    const fav = nhLogoOk(nhSettings.logoUrl) || '/_nh/favicon.png';
+    const fav = nhLogoOk(nhSettings.logoUrl) || '/_nh/logo.png';
     let favHref = fav;
     if (fav && nhSettings.colorizeLogo) {
       // match the colorized appbar logo: same accent tint, done on canvas
@@ -709,7 +709,7 @@
       const logoImgs = document.querySelectorAll('#appbar a[href$="/"] img, #page-wrapper img[alt="Audiobookshelf Logo"]');
       logoImgs.forEach(function (img) {
         if (!img.dataset.origSrc) img.dataset.origSrc = img.getAttribute('src');
-        const targetSrc = nhLogoOk(nhSettings.logoUrl) || '/_nh/favicon.png';
+        const targetSrc = nhLogoOk(nhSettings.logoUrl) || '/_nh/logo.png';
         document.documentElement.style.setProperty('--nh-logo-url', `url("${targetSrc}")`);
 
         const aTag = img.parentElement;

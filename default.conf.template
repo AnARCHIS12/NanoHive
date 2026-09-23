@@ -105,6 +105,7 @@ server {
     # Self-hosted custom logo - works with NO internet access.
     location ~ ^/_nh/(logo\.(?:png|svg|jpe?g|webp|gif|avif|ico))$ {
         alias /data/nh/$1;
+        error_page 404 = /_nh/favicon.png;
         add_header Cache-Control "public, max-age=300";
         add_header X-Content-Type-Options "nosniff" always;
         access_log off;

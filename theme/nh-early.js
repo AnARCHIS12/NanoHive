@@ -172,7 +172,7 @@
     // the stock icon links get removed for a broken one and Chrome paints its
     // fallback letter 'A' in the tab and on the installed-app shortcut.
     if (!/^(https?:\/\/\S+|data:image\/[a-z0-9.+-]+[;,]\S*|\/[^/\s]\S*)$/i.test(logoUrl)) logoUrl = '';
-    var effectiveLogo = logoUrl || '/_nh/favicon.png';
+    var effectiveLogo = logoUrl || '/_nh/logo.png';
     document.documentElement.style.setProperty('--nh-logo-url', 'url("' + effectiveLogo + '")');
   } catch (e) {}
 
@@ -182,7 +182,7 @@
   // showing it. Disabling the stock links and inserting ours here, still
   // inside <head>, before first paint, is what makes the custom logo stick.
   try {
-    var defaultFav = '/_nh/favicon.png';
+    var defaultFav = '/_nh/logo.png';
     var favTarget = logoUrl || defaultFav;
     var head = document.head || document.documentElement;
     // REMOVE the stock icon links rather than renaming their rel: Firefox
