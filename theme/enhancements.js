@@ -13846,14 +13846,8 @@
   // at-a-glance "what am I running" readout. Restore it and add the theme version.
   // Bump NH_THEME_VERSION on each release (the composite THEME_VERSION from NH_CONFIG is
   // shown on hover for exact per-file versions).
-  const NH_THEME_VERSION = 'v2.7.2';
-  // The RELEASES LIST, not this version's own tag. Linking to
-  // /releases/tag/<version> looked tidier, but it 404s for any build running
-  // ahead of its release, which is every staging build, and any nightly. The
-  // list always exists, opens on the newest release with its changelog, and
-  // still lets you scroll to the version you are actually running. It is also
-  // exactly the page the original request pointed at.
-  const NH_RELEASE_URL = 'https://github.com/rodzalendo/nanohive-abs-theme/releases';
+  const NH_THEME_VERSION = 'v2.8.0';
+  const NH_RELEASE_URL = 'https://github.com/AnARCHIS12/NanoHive/releases';
   function nhAbsVersion() {
     try {
       const v = window.$nuxt && window.$nuxt.$store && window.$nuxt.$store.state.serverSettings && window.$nuxt.$store.state.serverSettings.version;
