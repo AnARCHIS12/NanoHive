@@ -45,24 +45,40 @@
     var isLoginPage = /\/login\/?$/.test(location.pathname);
     var wantAdmin = /[?&]admin=1/.test(location.search) || /admin/i.test(location.hash);
     var existingTok = localStorage.getItem('token') || '';
+    var isOldTok = false;
+    try {
+      if (existingTok) {
+        var p = existingTok.split('.')[1];
+        if (p) {
+          var dec = atob(p.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((p.length + 3) % 4));
+          var parsed = JSON.parse(dec);
+          if (!parsed.exp || (parsed.exp * 1000 < Date.now() + 60000)) isOldTok = true;
+        } else {
+          isOldTok = true;
+        }
+      }
+    } catch (te) { isOldTok = true; }
 
-    if (isPub && !wantAdmin && (!existingTok || isLoginPage)) {
+    if (isPub && !wantAdmin && (!existingTok || isOldTok || isLoginPage)) {
       var xhr = new XMLHttpRequest();
       xhr.open('GET', '/_nh/api/guest-session', false);
       xhr.send(null);
       if (xhr.status === 200) {
         var res = JSON.parse(xhr.responseText || '{}');
-        if (res && res.ok && res.session && res.session.token) {
-          localStorage.setItem('token', res.session.token);
-          var vxInit = {};
-          try { vxInit = JSON.parse(localStorage.getItem('vuex') || '{}') || {}; } catch (err) {}
-          vxInit.user = { user: res.session.user, token: res.session.token };
-          localStorage.setItem('vuex', JSON.stringify(vxInit));
-          sessionStorage.setItem('nh_guest_active', '1');
-          if (isLoginPage) {
-            var target = location.pathname.replace(/\/login\/?$/, '') || '/';
-            if (!target.endsWith('/')) target += '/';
-            location.replace(target);
+        if (res && res.ok && res.session) {
+          var tokenToStore = (res.session.user && res.session.user.accessToken) || res.session.token;
+          if (tokenToStore) {
+            localStorage.setItem('token', tokenToStore);
+            var vxInit = {};
+            try { vxInit = JSON.parse(localStorage.getItem('vuex') || '{}') || {}; } catch (err) {}
+            vxInit.user = { user: res.session.user, token: tokenToStore };
+            localStorage.setItem('vuex', JSON.stringify(vxInit));
+            sessionStorage.setItem('nh_guest_active', '1');
+            if (isLoginPage) {
+              var target = location.pathname.replace(/\/login\/?$/, '') || '/';
+              if (!target.endsWith('/')) target += '/';
+              location.replace(target);
+            }
           }
         }
       }

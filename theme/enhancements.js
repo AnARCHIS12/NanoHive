@@ -2504,7 +2504,8 @@
         try { localStorage.removeItem('token'); } catch (err) {}
         try { sessionStorage.removeItem('nh_guest_active'); } catch (err) {}
         document.body.classList.remove('nh-menu-open');
-        window.location.assign('/login?admin=1');
+        const absBase = (document.querySelector('base') && document.querySelector('base').getAttribute('href')) || '/';
+        window.location.assign((absBase.endsWith('/') ? absBase : absBase + '/') + 'login?admin=1');
       });
       drawer.appendChild(signinLink);
     }
@@ -2614,7 +2615,8 @@
       e.preventDefault();
       try { localStorage.removeItem('token'); } catch (err) {}
       try { sessionStorage.removeItem('nh_guest_active'); } catch (err) {}
-      window.location.assign('/login?admin=1');
+      const absBase = (document.querySelector('base') && document.querySelector('base').getAttribute('href')) || '/';
+      window.location.assign((absBase.endsWith('/') ? absBase : absBase + '/') + 'login?admin=1');
     });
 
     target.parentNode.insertBefore(btn, target);

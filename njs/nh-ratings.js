@@ -541,9 +541,27 @@ function guestSession(r) {
   const cached = (function () {
     try { return JSON.parse(fs.readFileSync('/data/nh/guest-session.json')); } catch (e) { return null; }
   })();
-  const now = Date.now();
+  function getJwtExp(tok) {
+    try {
+      const part = String(tok || '').split('.')[1];
+      if (!part) return 0;
+      let b64 = part.replace(/-/g, '+').replace(/_/g, '/');
+      while (b64.length % 4) b64 += '=';
+      const raw = (typeof Buffer !== 'undefined') ? Buffer.from(b64, 'base64').toString('utf8') : atob(b64);
+      const payload = JSON.parse(raw);
+      return payload && payload.exp ? Number(payload.exp) * 1000 : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
 
-  if (!forceRefresh && cached && cached.token && cached.user && cached.user.username === guestUser && (now - (cached.updatedAt || 0) < 21600000)) {
+  const cachedExp = cached && cached.token ? getJwtExp(cached.token) : 0;
+  const isCacheValid = !forceRefresh && cached && cached.token && cached.user &&
+    cached.user.username === guestUser &&
+    cachedExp > (now + 120000) &&
+    (now - (cached.updatedAt || 0) < 3000000);
+
+  if (isCacheValid) {
     return send(r, 200, { ok: true, publicMode: true, session: cached });
   }
 
@@ -553,19 +571,22 @@ function guestSession(r) {
       try {
         const raw = res.responseText || (res.responseBuffer ? res.responseBuffer.toString('utf8') : (res.responseBody || ''));
         const data = JSON.parse(raw || '{}');
-        if (data && data.user && data.user.token) {
-          const session = {
-            token: data.user.token,
-            user: data.user,
-            userDefaultLibraryId: data.userDefaultLibraryId || '',
-            serverSettings: data.serverSettings || {},
-            updatedAt: Date.now()
-          };
-          try {
-            fs.writeFileSync('/data/nh/guest-session.json.tmp', JSON.stringify(session));
-            fs.renameSync('/data/nh/guest-session.json.tmp', '/data/nh/guest-session.json');
-          } catch (writeErr) {}
-          return send(r, 200, { ok: true, publicMode: true, session: session });
+        if (data && data.user) {
+          const modernToken = data.user.accessToken || data.user.token;
+          if (modernToken) {
+            const session = {
+              token: modernToken,
+              user: data.user,
+              userDefaultLibraryId: data.userDefaultLibraryId || '',
+              serverSettings: data.serverSettings || {},
+              updatedAt: Date.now()
+            };
+            try {
+              fs.writeFileSync('/data/nh/guest-session.json.tmp', JSON.stringify(session));
+              fs.renameSync('/data/nh/guest-session.json.tmp', '/data/nh/guest-session.json');
+            } catch (writeErr) {}
+            return send(r, 200, { ok: true, publicMode: true, session: session });
+          }
         }
       } catch (err) {}
     }
