@@ -551,7 +551,8 @@ function guestSession(r) {
   r.subrequest('/_nh/internal-abs-login', { method: 'POST', body: loginPayload }, function (res) {
     if (res.status === 200) {
       try {
-        const data = JSON.parse(res.responseBody || '{}');
+        const raw = res.responseText || (res.responseBuffer ? res.responseBuffer.toString('utf8') : (res.responseBody || ''));
+        const data = JSON.parse(raw || '{}');
         if (data && data.user && data.user.token) {
           const session = {
             token: data.user.token,

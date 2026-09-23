@@ -42,7 +42,7 @@
   // --- Public Mode Auto-Guest Bootstrap ---
   try {
     var isPub = (SRV.publicMode !== undefined) ? !!SRV.publicMode : (CFG.publicMode === true || CFG.publicMode === 'true');
-    var isLoginPage = /^\/login\/?$/.test(location.pathname);
+    var isLoginPage = /\/login\/?$/.test(location.pathname);
     var wantAdmin = /[?&]admin=1/.test(location.search) || /admin/i.test(location.hash);
     var existingTok = localStorage.getItem('token') || '';
 
@@ -60,7 +60,9 @@
           localStorage.setItem('vuex', JSON.stringify(vxInit));
           sessionStorage.setItem('nh_guest_active', '1');
           if (isLoginPage) {
-            location.replace('/');
+            var target = location.pathname.replace(/\/login\/?$/, '') || '/';
+            if (!target.endsWith('/')) target += '/';
+            location.replace(target);
           }
         }
       }
