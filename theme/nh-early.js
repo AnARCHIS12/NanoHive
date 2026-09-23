@@ -172,7 +172,8 @@
     // the stock icon links get removed for a broken one and Chrome paints its
     // fallback letter 'A' in the tab and on the installed-app shortcut.
     if (!/^(https?:\/\/\S+|data:image\/[a-z0-9.+-]+[;,]\S*|\/[^/\s]\S*)$/i.test(logoUrl)) logoUrl = '';
-    if (logoUrl) document.documentElement.style.setProperty('--nh-logo-url', 'url("' + logoUrl + '")');
+    var effectiveLogo = logoUrl || '/_nh/favicon.png';
+    document.documentElement.style.setProperty('--nh-logo-url', 'url("' + effectiveLogo + '")');
   } catch (e) {}
 
   // Tab icon, as early as possible. enhancements.js also owns this (and can

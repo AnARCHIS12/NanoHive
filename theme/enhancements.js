@@ -709,7 +709,7 @@
       const logoImgs = document.querySelectorAll('#appbar a[href$="/"] img, #page-wrapper img[alt="Audiobookshelf Logo"]');
       logoImgs.forEach(function (img) {
         if (!img.dataset.origSrc) img.dataset.origSrc = img.getAttribute('src');
-        const targetSrc = nhLogoOk(nhSettings.logoUrl) || img.dataset.origSrc;
+        const targetSrc = nhLogoOk(nhSettings.logoUrl) || '/_nh/favicon.png';
         document.documentElement.style.setProperty('--nh-logo-url', `url("${targetSrc}")`);
 
         const aTag = img.parentElement;
@@ -2596,10 +2596,11 @@
 
     if (existing) return;
 
+    const accountBtn = document.querySelector('#appbar a[href$="/account"]') || document.querySelector('#appbar button[aria-label="Account"]') || document.querySelector('#appbar button[aria-label*="user" i]') || document.querySelector('#appbar .account-btn');
     const gear = document.getElementById('nh-gear-btn');
     const statsBtn = document.querySelector('#appbar a[href*="/stats"]');
-    const target = gear || statsBtn || document.querySelector('#appbar button[aria-label="Account"]') || document.querySelector('#appbar button[aria-label*="user" i]') || document.querySelector('#appbar .account-btn') || document.querySelector('#appbar > div:last-child');
-    if (!target || !target.parentNode) return;
+    const flexRow = document.querySelector('#appbar .flex.h-full.items-center') || document.querySelector('#appbar > div.flex');
+    const target = gear || statsBtn || accountBtn;
 
     const btn = document.createElement('a');
     btn.id = 'nh-guest-signin-btn';
@@ -2608,7 +2609,7 @@
     const isFr = getUserLanguage().startsWith('fr');
     const lbl = isFr ? 'Connexion' : 'Sign in';
     btn.title = lbl;
-    btn.style.cssText = 'cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:999px; background:var(--nh-amber-tint, rgba(224,194,122,0.15)); border:1px solid var(--nh-amber, #e0c27a); color:var(--nh-amber, #e0c27a); font-size:0.85rem; font-weight:600; text-decoration:none; margin-right:8px; transition:all .2s;';
+    btn.style.cssText = 'cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:999px; background:var(--nh-amber-tint, rgba(224,194,122,0.15)); border:1px solid var(--nh-amber, #e0c27a); color:var(--nh-amber, #e0c27a); font-size:0.85rem; font-weight:600; text-decoration:none; margin-right:8px; transition:all .2s; height:32px; line-height:1; flex-shrink:0; align-self:center;';
     btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>${lbl}</span>`;
 
     btn.addEventListener('click', (e) => {
@@ -2619,14 +2620,21 @@
       window.location.assign((absBase.endsWith('/') ? absBase : absBase + '/') + 'login?admin=1');
     });
 
-    target.parentNode.insertBefore(btn, target);
+    if (target && target.parentNode) {
+      target.parentNode.insertBefore(btn, target);
+    } else if (flexRow) {
+      flexRow.appendChild(btn);
+    } else {
+      return;
+    }
   }
 
   function injectGearButton() {
     if (document.getElementById('nh-gear-btn')) return;
+    const accountBtn = document.querySelector('#appbar a[href$="/account"]') || document.querySelector('#appbar button[aria-label="Account"]') || document.querySelector('#appbar button[aria-label*="user" i]') || document.querySelector('#appbar .account-btn');
     const statsBtn = document.querySelector('#appbar a[href*="/stats"]');
-    const target = statsBtn || document.querySelector('#appbar button[aria-label="Account"]') || document.querySelector('#appbar button[aria-label*="user" i]') || document.querySelector('#appbar .account-btn') || document.querySelector('#appbar > div:last-child');
-    if (!target || !target.parentNode) return;
+    const flexRow = document.querySelector('#appbar .flex.h-full.items-center') || document.querySelector('#appbar > div.flex');
+    const target = statsBtn || accountBtn;
 
     const gear = document.createElement('a');
     gear.id = 'nh-gear-btn';
@@ -2640,7 +2648,11 @@
       openSettingsModal();
     });
 
-    target.parentNode.insertBefore(gear, target);
+    if (target && target.parentNode) {
+      target.parentNode.insertBefore(gear, target);
+    } else if (flexRow) {
+      flexRow.appendChild(gear);
+    }
   }
 
   function openSettingsModal() {
