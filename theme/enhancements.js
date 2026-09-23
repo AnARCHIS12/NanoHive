@@ -1460,7 +1460,7 @@
     if (!item) {
       item = document.createElement('a');
       item.id = 'nh-config-nav-item';
-      item.href = '/audiobookshelf/config' + NH_HASH;
+      item.href = (getBaseNH() || '') + '/config' + NH_HASH;
       item.className = 'w-full px-3 h-12 border-b border-primary/30 flex items-center cursor-pointer relative hover:bg-primary/30';
       item.innerHTML = `<p class="leading-4"></p><div class="h-full w-0.5 bg-yellow-400 absolute top-0 left-0" style="display:none;"></div>`;
 
@@ -1484,7 +1484,7 @@
         if (onConfigRoot) {
           if (window.location.hash !== NH_HASH) window.location.hash = NH_HASH;
         } else {
-          window.location.href = '/audiobookshelf/config' + NH_HASH;
+          window.location.href = (getBaseNH() || '') + '/config' + NH_HASH;
         }
         setTimeout(() => { try { injectSettingsPanel(); } catch (err) {} }, 0);
       });
@@ -1625,26 +1625,6 @@
         </section>
 
         <section class="nh-card">
-          <h2 class="nh-card-title">Hardcover</h2>
-          <p class="nh-hint" style="margin-top:0;">${T.hcHint || PANEL_T.en.hcHint}</p>
-          <div class="nh-field">
-            <label class="nh-label">${T.hcKeyLbl || PANEL_T.en.hcKeyLbl}</label>
-            <div style="display:flex; gap:10px; align-items:center;">
-              <input type="password" id="nh-hc-key" placeholder="Bearer eyJ..." autocomplete="new-password" data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other" style="flex:1;">
-              <button type="button" id="nh-hc-save" class="nh-upload-btn">${T.sdSave || PANEL_T.en.sdSave}</button>
-            </div>
-          </div>
-          <div class="nh-field" id="nh-tog-hcsync"></div>
-          <div class="nh-field" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <button type="button" id="nh-hc-all" class="nh-upload-btn">${T.hcPushAll || PANEL_T.en.hcPushAll}</button>
-            <button type="button" id="nh-hc-diff" class="nh-upload-btn">${T.hcPushDiff || PANEL_T.en.hcPushDiff}</button>
-            <button type="button" id="nh-hc-import" class="nh-upload-btn">${T.hcImport || PANEL_T.en.hcImport}</button>
-          </div>
-          <span class="nh-rt-status" id="nh-hc-status"></span>
-          <div id="nh-hc-miss"></div>
-        </section>
-
-        <section class="nh-card">
           <h2 class="nh-card-title">${T.searchCard || PANEL_T.en.searchCard}</h2>
           <p class="nh-hint" style="margin-top:0;">${T.gsHint || PANEL_T.en.gsHint}</p>
           <div class="nh-field" id="nh-tog-gsearch"></div>
@@ -1654,17 +1634,6 @@
           <h2 class="nh-card-title">${T.bsCard || PANEL_T.en.bsCard}</h2>
           <p class="nh-hint" style="margin-top:0;">${T.bsHint || PANEL_T.en.bsHint}</p>
           <div class="nh-field" id="nh-booksites"></div>
-        </section>
-
-        <section class="nh-card">
-          <h2 class="nh-card-title">${T.fsCard || PANEL_T.en.fsCard}</h2>
-          <p class="nh-hint" style="margin-top:0;">${T.fsHint || PANEL_T.en.fsHint}</p>
-          <div class="nh-field" id="nh-tog-familystats"></div>
-          <div class="nh-divider"></div>
-          <p class="nh-hint" style="margin-top:0;">${T.srHint || PANEL_T.en.srHint}</p>
-          <div class="nh-field" id="nh-tog-sharereading"></div>
-          <div class="nh-field" id="nh-tog-ratingname"></div>
-          <div class="nh-field" id="nh-tog-shareratings"></div>
         </section>
 
         <section class="nh-card">
@@ -1771,29 +1740,6 @@
       });
     })();
     panel.querySelector('#nh-tog-gsearch').appendChild(createToggle(T.gsToggle || PANEL_T.en.gsToggle, 'globalSearch'));
-    panel.querySelector('#nh-tog-familystats').appendChild(createToggle(T.fsToggle || PANEL_T.en.fsToggle, 'familyStats'));
-    panel.querySelector('#nh-tog-hcsync').appendChild(createToggle(T.hcToggle || PANEL_T.en.hcToggle, 'hcSync'));
-    (function wireHardcover() {
-      const status = panel.querySelector('#nh-hc-status');
-      const miss = panel.querySelector('#nh-hc-miss');
-      panel.querySelector('#nh-hc-all').addEventListener('click', () => nhHcBulk(false, status, miss));
-      panel.querySelector('#nh-hc-diff').addEventListener('click', () => nhHcBulk(true, status, miss));
-      panel.querySelector('#nh-hc-import').addEventListener('click', () => nhHcImportPull(status));
-      // Explicit save (Pawel): typing already saves live, but a button that
-      // answers with a tick makes "did it take?" a non-question. The key lands
-      // in the caller's OWN prefs record - per user by construction.
-      const saveBtn = panel.querySelector('#nh-hc-save');
-      saveBtn.addEventListener('click', () => {
-        nhSettings.hcKey = panel.querySelector('#nh-hc-key').value;
-        saveSettings();
-        const orig = saveBtn.textContent;
-        saveBtn.textContent = '✓';
-        setTimeout(() => { saveBtn.textContent = orig; }, 2000);
-      });
-    })();
-    panel.querySelector('#nh-tog-sharereading').appendChild(createToggle(T.srToggle || PANEL_T.en.srToggle, 'shareReading'));
-    panel.querySelector('#nh-tog-ratingname').appendChild(createToggle(T.rnToggle || PANEL_T.en.rnToggle, 'shareRatingName'));
-    panel.querySelector('#nh-tog-shareratings').appendChild(createToggle(T.rsToggle || PANEL_T.en.rsToggle, 'shareRatings'));
     panel.querySelector('#nh-tog-autoplay').appendChild(createToggle(T.apToggle || PANEL_T.en.apToggle, 'autoplaySeries'));
     panel.querySelector('#nh-tog-finishedtools').appendChild(createToggle(T.fdToggle || PANEL_T.en.fdToggle, 'finishedTools'));
     // Live filter over the cards: with this many settings, being able to type
@@ -2237,368 +2183,9 @@
       });
       gridEl.appendChild(lockSec);
 
-      // Social switches (#25): the three server-wide flags plus per-user
-      // exclusion. State lives on the proxy (social.json + admin tombstones in
-      // both shared stores), so this card only renders what the server answers.
-      const socSec = document.createElement('section');
-      socSec.className = 'nh-card nh-tab-admin';
-      socSec.innerHTML = '<h2 class="nh-card-title">' + (T.socTitle || PANEL_T.en.socTitle) + '</h2>' +
-        '<p class="nh-hint" style="margin-bottom:8px;">' + (T.socHint || PANEL_T.en.socHint) + '</p>' +
-        '<div id="nh-soc-flags"></div>' +
-        '<div class="nh-divider"></div>' +
-        '<div class="nh-subhead">' + (T.socUsers || PANEL_T.en.socUsers) + '</div>' +
-        '<p class="nh-hint" style="margin-top:0;">' + (T.socUsersHint || PANEL_T.en.socUsersHint) + '</p>' +
-        '<div id="nh-soc-users"></div><span class="nh-rt-status" id="nh-soc-status"></span>';
-      gridEl.appendChild(socSec);
-      (function socialCard() {
-        const flagsHost = socSec.querySelector('#nh-soc-flags');
-        const usersHost = socSec.querySelector('#nh-soc-users');
-        const status = socSec.querySelector('#nh-soc-status');
-        const tgCls = (on) => 'border rounded-full flex items-center ' + (on ? 'bg-success border-success justify-end' : 'bg-primary border-black-100 justify-start');
-        const tgRow = (label, on, dim) =>
-          '<div><button type="button" class="' + tgCls(on) + '" style="width: 40px; transition: all 0.2s;' + (dim ? ' opacity: 0.4;' : '') + '">' +
-          '<span class="rounded-full border border-black-50 shadow-sm bg-white" style="width: 20px; height: 20px;"></span></button></div>' +
-          '<p class="pl-4 text-gray-200 group-hover:text-white transition-colors text-sm"></p>';
-        let state = null;   // { eff, cfg, tombs } from the server
-        let roster = null;  // active users, for the exclusion list
-        const post = (body) => {
-          fetch('/_nh/api/social-admin', { method: 'POST', headers: { Authorization: 'Bearer ' + nhAbsToken(), 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) })
-            .then((r) => (r.ok ? r.json() : null))
-            .then((j) => {
-              if (!j) { status.textContent = T.srvErr || PANEL_T.en.srvErr; return; }
-              status.textContent = '';
-              state = j;
-              nhSoc.eff = j.eff; // this admin's session follows immediately
-              nhLf.viewSig = '';
-              render();
-            })
-            .catch(() => { status.textContent = T.srvErr || PANEL_T.en.srvErr; });
-        };
-        const FLAGS = [['time', 'socTime'], ['content', 'socContent'], ['whoReading', 'socWho'], ['names', 'socNames']];
-        const render = () => {
-          if (!state || !state.eff) return;
-          flagsHost.textContent = '';
-          FLAGS.forEach((f) => {
-            const row = document.createElement('div');
-            row.className = 'flex items-center py-2 cursor-pointer group';
-            row.innerHTML = tgRow(T[f[1]] || PANEL_T.en[f[1]], !!state.eff[f[0]]);
-            row.querySelector('p').textContent = T[f[1]] || PANEL_T.en[f[1]];
-            row.addEventListener('click', () => { const set = {}; set[f[0]] = !state.eff[f[0]]; post({ set: set }); });
-            flagsHost.appendChild(row);
-          });
-          usersHost.textContent = '';
-          // one column always: two switch cells per row never fit two columns
-          // side by side (Pawel tried, twice)
-          // Two per-user toggles (Pawel): ranking time and books, mirroring the
-          // user's own pair. A user's own opt-out shows dimmed and stays
-          // theirs; an admin exclusion is flippable. Old union tombs kept for
-          // everything else, per-kind lists drive these switches.
-          const tombs = state.tombs || {};
-          const kinds = [
-            { kind: 'time', icon: 'leaderboard', label: T.socTime || PANEL_T.en.socTime, excl: tombs.exclTime || tombs.excluded || [], opt: tombs.optTime || tombs.optedOut || [] },
-            { kind: 'books', icon: 'menu_book', label: T.srToggle || PANEL_T.en.srToggle, excl: tombs.exclBooks || tombs.excluded || [], opt: tombs.optBooks || [] },
-            { kind: 'names', icon: 'badge', label: T.socNames || PANEL_T.en.socNames, excl: tombs.exclNames || [], opt: tombs.optNames || [] },
-          ];
-          (roster || []).forEach((u) => {
-            const row = document.createElement('div');
-            row.className = 'nh-soc-row flex items-center py-2 group';
-            const nm = document.createElement('p');
-            nm.className = 'text-gray-200 text-sm';
-            nm.style.flex = '1';
-            nm.textContent = u.username;
-            row.appendChild(nm);
-            kinds.forEach((k) => {
-              const excluded = k.excl.indexOf(u.id) >= 0;
-              const opted = !excluded && k.opt.indexOf(u.id) >= 0;
-              const cell = document.createElement('span');
-              cell.className = 'nh-soc-tg';
-              cell.title = k.label + (opted ? ' · ' + (T.socOpted || PANEL_T.en.socOpted) : '');
-              const ico = document.createElement('span');
-              ico.className = 'material-symbols nh-soc-ico';
-              ico.textContent = k.icon;
-              cell.appendChild(ico);
-              const btn = document.createElement('span');
-              btn.innerHTML = tgRow('', !excluded && !opted, opted);
-              const b = btn.querySelector('button');
-              if (!opted) {
-                b.style.cursor = 'pointer';
-                b.addEventListener('click', () => {
-                  if (excluded) post({ include: u.id, kind: k.kind });
-                  else post({ exclude: u.id, user: u.username, kind: k.kind });
-                });
-              }
-              cell.appendChild(btn.firstChild);
-              row.appendChild(cell);
-            });
-            usersHost.appendChild(row);
-          });
-        };
-        Promise.all([
-          fetch('/_nh/api/social-admin', { headers: { Authorization: 'Bearer ' + nhAbsToken() }, credentials: 'include' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-          fetch('/api/users', { headers: { Authorization: 'Bearer ' + nhAbsToken() } }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        ]).then((res) => {
-          state = res[0];
-          roster = ((res[1] && (res[1].users || res[1])) || []).filter((u) => u && u.isActive !== false);
-          if (!state) { status.textContent = T.srvErr || PANEL_T.en.srvErr; return; }
-          render();
-        });
-      })();
-
       // Sessions card (Pawel): the last 10 listening sessions across the whole
       // server, with anything active right now pinned on top. Refreshes itself
       // every 30 seconds for as long as the card is on screen.
-      // ---- Goodreads ratings card (#27): switch, helper address, discovery ----
-      // Book pages fill the map in by themselves, so the controls are the
-      // server-wide switch and WHERE the abs-tract helper lives. The address is
-      // found by itself when possible (ABS's own metadata-provider list, the
-      // compose service name, this host) and saved server-side; nginx reads it
-      // per request, no restart.
-      const cmSec = document.createElement('section');
-      cmSec.className = 'nh-card nh-tab-admin';
-      cmSec.innerHTML = '<h2 class="nh-card-title">' + (T.cmTitle || PANEL_T.en.cmTitle) + '</h2>' +
-        '<p class="nh-hint" style="margin-top:0;">' + (T.cmHint || PANEL_T.en.cmHint) + '</p>' +
-        '<div id="nh-cm-toggle"></div>' +
-        '<div class="nh-field"><label class="nh-label">' + (T.cmAddr || PANEL_T.en.cmAddr) + '</label>' +
-        '<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">' +
-        '<input type="text" id="nh-cm-url" placeholder="http://abs-tract:5555/goodreads" autocomplete="off" data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other" spellcheck="false" style="flex:1; min-width:200px;">' +
-        '<button type="button" id="nh-cm-save" class="nh-upload-btn">' + (T.sdSave || PANEL_T.en.sdSave) + '</button>' +
-        '<button type="button" id="nh-cm-detect" class="nh-upload-btn">' + (T.cmDetect || PANEL_T.en.cmDetect) + '</button>' +
-        '</div></div>' +
-        '<p class="nh-hint" id="nh-cm-source" style="margin-top:2px;"></p>' +
-        '<div id="nh-cm-scan" style="display:none;"><div class="nh-divider"></div>' +
-        '<div class="nh-subhead">' + (T.cmScanLibs || PANEL_T.en.cmScanLibs) + '</div>' +
-        '<div id="nh-cm-libs" class="nh-cm-libs"></div>' +
-        '<div id="nh-cm-scan-all" class="nh-cm-lib nh-cm-all flex items-center py-2 cursor-pointer group" data-on="0"></div>' +
-        '<div id="nh-cm-scan-prog" class="nh-cm-prog" style="display:none;"><div class="nh-cm-meta"><span class="nh-cm-pct"></span><span class="nh-cm-cnt"></span></div>' +
-        '<div class="nh-cm-bar"><div class="nh-cm-fill"></div></div></div>' +
-        '<div id="nh-cm-scan-title" class="nh-cm-scantitle" style="display:none;"></div>' +
-        '<div class="nh-cm-actions">' +
-        '<button type="button" id="nh-cm-scan-btn" class="nh-upload-btn nh-cm-go">' + (T.cmScan || PANEL_T.en.cmScan) + '</button>' +
-        '<button type="button" id="nh-cm-scan-stop" class="nh-upload-btn" style="display:none;">' + (T.cmStop || PANEL_T.en.cmStop) + '</button>' +
-        '<span class="nh-rt-status" id="nh-cm-scan-status"></span></div>' +
-        '<p class="nh-hint nh-cm-done" id="nh-cm-scan-done"></p>' +
-        '<div id="nh-cm-missed" class="nh-cm-missed" style="display:none;"></div></div>' +
-        '<div id="nh-cm-setup" style="display:none;"><p class="nh-hint" id="nh-cm-setup-hint" style="margin-top:6px;"></p>' +
-        '<pre class="nh-cm-code">services:\n  abs-tract:\n    image: ghcr.io/rodzalendo/abs-tract-ratings:latest\n    restart: unless-stopped</pre></div>' +
-        '<span class="nh-rt-status" id="nh-cm-status"></span>';
-      gridEl.appendChild(cmSec);
-      (function communityCard() {
-        const status = cmSec.querySelector('#nh-cm-status');
-        const srcLine = cmSec.querySelector('#nh-cm-source');
-        const setup = cmSec.querySelector('#nh-cm-setup');
-        const urlIn = cmSec.querySelector('#nh-cm-url');
-        urlIn.value = nhGoodreadsUrl || '';
-        cmSec.querySelector('#nh-cm-setup-hint').textContent = T.cmSetup || PANEL_T.en.cmSetup;
-        // Whole-library scan (#34): the HELPER runs it. This card uploads the
-        // book list once, then only watches (and can stop) the run; another
-        // tab, a phone, or the card reopened later all show the same run.
-        const scanBox = cmSec.querySelector('#nh-cm-scan');
-        const libsHost = cmSec.querySelector('#nh-cm-libs');
-        const scanBtn = cmSec.querySelector('#nh-cm-scan-btn');
-        const scanStop = cmSec.querySelector('#nh-cm-scan-stop');
-        const scanStatus = cmSec.querySelector('#nh-cm-scan-status');
-        const scanProg = cmSec.querySelector('#nh-cm-scan-prog');
-        const scanTitle = cmSec.querySelector('#nh-cm-scan-title');
-        const scanDone = cmSec.querySelector('#nh-cm-scan-done');
-        const scanAll = cmSec.querySelector('#nh-cm-scan-all');
-        // The same switch rows as every other card (click anywhere on the row).
-        const tglCls = (on) => 'border rounded-full flex items-center ' + (on ? 'bg-success border-success justify-end' : 'bg-primary border-black-100 justify-start');
-        // The choice is remembered server-side (hobesman: came back to the card
-        // mid-scan and every library was ticked again): the switched-OFF
-        // libraries and the "everything again" switch live in the server
-        // config, so any device shows the same, and a new library starts on.
-        const libsOff = () => Array.isArray(uiServerSettings.cmScanLibsOff) ? uiServerSettings.cmScanLibsOff : [];
-        const remember = () => {
-          uiServerSettings.cmScanLibsOff = Array.from(libsHost.querySelectorAll('.nh-cm-lib[data-on="0"]')).map((r) => r.dataset.id);
-          if (scanAll.dataset.on === '1') uiServerSettings.cmScanAll = true; else delete uiServerSettings.cmScanAll;
-          putServerConfig(Object.assign({}, uiServerSettings), status, '✓');
-        };
-        const tglRow = (row, label, on) => {
-          row.dataset.on = on ? '1' : '0';
-          row.innerHTML = '<div><button type="button" class="' + tglCls(on) + '" style="width: 40px; transition: all 0.2s;">' +
-            '<span class="rounded-full border border-black-50 shadow-sm bg-white" style="width: 20px; height: 20px;"></span></button></div>' +
-            '<p class="pl-4 text-gray-200 group-hover:text-white transition-colors text-sm"></p>';
-          row.querySelector('p').textContent = label;
-          row.addEventListener('click', () => { const next = row.dataset.on !== '1'; row.dataset.on = next ? '1' : '0'; row.querySelector('button').className = tglCls(next); remember(); });
-          return row;
-        };
-        tglRow(scanAll, T.cmScanAll || PANEL_T.en.cmScanAll, uiServerSettings.cmScanAll === true);
-        fetch('/api/libraries', { headers: { Authorization: 'Bearer ' + nhSrToken() } }).then((r) => (r.ok ? r.json() : null)).then((j) => {
-          ((j && j.libraries) || []).filter((l) => l.mediaType === 'book').forEach((l) => {
-            const row = document.createElement('div');
-            row.className = 'nh-cm-lib flex items-center py-1 cursor-pointer group';
-            row.dataset.id = l.id;
-            libsHost.appendChild(tglRow(row, l.name, libsOff().indexOf(l.id) < 0));
-          });
-        }).catch(() => {});
-        // Digits sit in fixed-width slots (tabular numerals + a reserved width
-        // from the total) so the line does not jump as the numbers change.
-        const setStatus = (done, total, title) => {
-          const pct = total ? Math.floor(done * 100 / total) : 0;
-          scanProg.querySelector('.nh-cm-pct').textContent = total ? pct + '%' : '…';
-          scanProg.querySelector('.nh-cm-cnt').textContent = total ? done + ' / ' + total : '';
-          scanProg.querySelector('.nh-cm-fill').style.width = (total ? Math.max(0.5, done * 100 / total).toFixed(1) : 0) + '%';
-          scanTitle.textContent = title || ' ';
-        };
-        const errsText = (n) => (T.cmScanErrs || PANEL_T.en.cmScanErrs).replace('{e}', n);
-        // The summary line, built piece by piece so the "N not found" piece
-        // can be a button that opens the list of those books (with links).
-        const missedBox = cmSec.querySelector('#nh-cm-missed');
-        const showMissed = () => {
-          if (missedBox.style.display !== 'none') { missedBox.style.display = 'none'; return; }
-          missedBox.textContent = '…'; missedBox.style.display = '';
-          nhCmScan.missed().then((items) => {
-            missedBox.textContent = '';
-            items.forEach((b) => {
-              const a = document.createElement('a');
-              a.className = 'nh-cm-mrow'; a.href = '/item/' + b.id;
-              a.innerHTML = '<span class="nh-cm-mt"></span><span class="nh-cm-ma"></span>';
-              a.querySelector('.nh-cm-mt').textContent = b.title || b.id;
-              a.querySelector('.nh-cm-ma').textContent = b.author || '';
-              a.addEventListener('click', (ev) => { ev.preventDefault(); try { window.$nuxt.$router.push('/item/' + b.id); } catch (e) { location.href = a.href; } });
-              missedBox.appendChild(a);
-            });
-            if (!items.length) missedBox.style.display = 'none';
-          });
-        };
-        const summaryText = (st) => {
-          let tpl = T.cmScanDone || PANEL_T.en.cmScanDone;
-          if (nhCmScan.skipped == null) tpl = tpl.replace(/\s*·[^·]*\{s\}[^·]*$/, '');
-          let s = tpl.replace('{m}', st.matched || 0).replace('{x}', st.missed || 0).replace('{s}', nhCmScan.skipped || 0);
-          if (st.errors) s += ' · ' + errsText(st.errors);
-          if (st.stopped) s += ' · ' + (T.cmStopped || PANEL_T.en.cmStopped);
-          return s;
-        };
-        const summary = (st) => {
-          scanDone.textContent = '';
-          missedBox.style.display = 'none';
-          let tpl = T.cmScanDone || PANEL_T.en.cmScanDone;
-          // "already had one" is only known by the tab that started the run
-          if (nhCmScan.skipped == null) tpl = tpl.replace(/\s*·[^·]*\{s\}[^·]*$/, '');
-          const segs = tpl.split(' · ');
-          segs.forEach((seg, i) => {
-            if (i) scanDone.appendChild(document.createTextNode(' · '));
-            const txt = seg.replace('{m}', st.matched || 0).replace('{x}', st.missed || 0).replace('{s}', nhCmScan.skipped || 0);
-            if (seg.indexOf('{x}') >= 0 && st.missed > 0) {
-              const b = document.createElement('button'); b.type = 'button'; b.className = 'nh-cm-link'; b.textContent = txt;
-              b.addEventListener('click', showMissed);
-              scanDone.appendChild(b);
-            } else scanDone.appendChild(document.createTextNode(txt));
-          });
-          if (st.errors) scanDone.appendChild(document.createTextNode(' · ' + errsText(st.errors)));
-          if (st.stopped) scanDone.appendChild(document.createTextNode(' · ' + (T.cmStopped || PANEL_T.en.cmStopped)));
-          return scanDone.textContent;
-        };
-        const showRunning = (on) => {
-          scanBtn.style.display = on ? 'none' : ''; scanStop.style.display = on ? '' : 'none';
-          scanProg.style.display = on ? '' : 'none'; scanTitle.style.display = on ? '' : 'none';
-        };
-        let pollT = null, lastSeq = null, holdDone = false, wasOnPage = false;
-        const poll = () => {
-          clearTimeout(pollT); pollT = null;
-          // the status answer can come back before the panel is on the page:
-          // try again in a moment; once it has been on the page and is gone, stop
-          if (!document.body.contains(cmSec)) { if (!wasOnPage) pollT = setTimeout(poll, 1000); return; }
-          wasOnPage = true;
-          nhCmScan.status().then((st) => {
-            if (!document.body.contains(cmSec)) return;
-            if (!st) { pollT = setTimeout(poll, 10000); return; }
-            const changed = st.seq !== lastSeq; lastSeq = st.seq;
-            if (st.running) {
-              holdDone = false;
-              showRunning(true); setStatus(st.done, st.total, st.current);
-              scanStop.disabled = !!st.stopped; scanStop.textContent = st.stopped ? '…' : (T.cmStop || PANEL_T.en.cmStop);
-              scanStatus.textContent = st.errors ? errsText(st.errors) : '';
-              if (changed) nhCmScan.sync();
-              pollT = setTimeout(poll, 3000);
-            } else {
-              showRunning(false); scanStatus.textContent = ''; scanStop.disabled = false; scanStop.textContent = T.cmStop || PANEL_T.en.cmStop;
-              if (st.total && !holdDone && scanDone.textContent !== summaryText(st)) summary(st);
-              if (changed) nhCmScan.sync().then(() => { nhCm.at = 0; nhCm.items = null; nhCmItems(); });
-              pollT = setTimeout(poll, 15000); // a run started elsewhere shows up here too
-            }
-          });
-        };
-        scanBtn.addEventListener('click', () => {
-          const libs = Array.from(libsHost.querySelectorAll('.nh-cm-lib[data-on="1"]')).map((r) => r.dataset.id);
-          if (!libs.length || scanBtn.disabled) return;
-          scanDone.textContent = ''; scanStatus.textContent = '…'; scanBtn.disabled = true; holdDone = true;
-          nhCmScan.start(libs, scanAll.dataset.on === '1').then((r) => {
-            scanBtn.disabled = false; scanStatus.textContent = '';
-            holdDone = false;
-            if (r && r.busy) scanStatus.textContent = T.cmScanBusy || PANEL_T.en.cmScanBusy;
-            else if (r && r.nothing) { summary({ matched: 0, missed: 0 }); holdDone = true; } // keep this, not the previous run's line
-            lastSeq = null; poll();
-          }).catch(() => { scanBtn.disabled = false; holdDone = false; scanStatus.textContent = T.cmGrDown || PANEL_T.en.cmGrDown; });
-        });
-        scanStop.addEventListener('click', () => { scanStop.disabled = true; scanStop.textContent = '…'; nhCmScan.stop().then(poll); });
-        // The switch: an admin-owned server flag, absent = on (same shape as the
-        // Redesigned pages toggles, so "save server defaults" keeps it).
-        const key = 'communityRatings';
-        const btnCls = (on) => 'border rounded-full flex items-center ' + (on ? 'bg-success border-success justify-end' : 'bg-primary border-black-100 justify-start');
-        const row = document.createElement('div');
-        row.className = 'flex items-center py-2 cursor-pointer group';
-        row.innerHTML = '<div><button type="button" class="' + btnCls(uiServerSettings[key] !== false) + '" style="width: 40px; transition: all 0.2s;">' +
-          '<span class="rounded-full border border-black-50 shadow-sm bg-white" style="width: 20px; height: 20px;"></span></button></div>' +
-          '<p class="pl-4 text-gray-200 group-hover:text-white transition-colors text-sm"></p>';
-        row.querySelector('p').textContent = T.cmTitle || PANEL_T.en.cmTitle;
-        row.addEventListener('click', function () {
-          const next = uiServerSettings[key] === false;
-          if (next) delete uiServerSettings[key]; else uiServerSettings[key] = false;
-          row.querySelector('button').className = btnCls(next);
-          nhSettings[key] = next;
-          applySettings();
-          putServerConfig(Object.assign({}, uiServerSettings), status, '✓');
-        });
-        cmSec.querySelector('#nh-cm-toggle').appendChild(row);
-        // Is the helper there? One question through the relay (which reads the
-        // saved address). Without an answer the card shows the setup lines.
-        let checkT = null;
-        const check = (again) => {
-          const n = Number(again) || 0;
-          clearTimeout(checkT); checkT = null;
-          srcLine.textContent = '…';
-          // A tab opened a moment ago may not have its login token yet: every
-          // question would come back 401 and the card would call a live
-          // helper dead. Wait for the token first.
-          if (!nhSrToken() && n < 6) return new Promise((res) => setTimeout(res, 1000)).then(() => check(n + 1));
-          nhCm.gr = false;
-          return Promise.resolve('off')
-            .then((st) => {
-              const K = { off: 'cmGrOff', down: 'cmGrDown', on: 'cmGrOn', nonum: 'cmGrNoNum' }[st];
-              // A hiccup (helper just restarted, busy with a scan, Goodreads
-              // slow) is not a verdict: three more tries, spaced out.
-              if (st === 'down' && n < 3) return new Promise((res) => setTimeout(res, 3000 + n * 2000)).then(() => check(n + 1));
-              srcLine.textContent = (T[K] || PANEL_T.en[K]) + (st === 'on' && urlIn.value ? ' · ' + urlIn.value : '');
-              // setup lines only when there is nothing to talk to (or the wrong
-              // build); "set up but not answering" keeps asking by itself
-              setup.style.display = (st === 'off' || st === 'nonum') ? '' : 'none';
-              scanBox.style.display = st === 'on' ? '' : 'none';
-              if (st === 'on') poll(); // a run already going shows at once
-              if (st === 'down') checkT = setTimeout(() => { if (document.body.contains(cmSec)) check(0); }, 20000);
-              return st;
-            });
-        };
-        const saveUrl = (u) => {
-          u = String(u || '').trim().replace(/\/+$/, '');
-          urlIn.value = u;
-          nhCm.gr = null;
-          const cfg = Object.assign({}, uiServerSettings);
-          if (u) cfg.goodreadsUrl = u;
-          // Only ask the relay once the new address is on disk; one retry for
-          // a transient hiccup, the helper takes a moment on first contact.
-          Promise.resolve(putServerConfig(cfg, status, '✓')).catch(() => {}).then(() => check());
-        };
-        cmSec.querySelector('#nh-cm-save').addEventListener('click', () => saveUrl(urlIn.value));
-        urlIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveUrl(urlIn.value); });
-        cmSec.querySelector('#nh-cm-detect').addEventListener('click', () => {
-          srcLine.textContent = '…';
-          nhCmDiscover().then((hit) => { if (hit) saveUrl(hit); else check(); });
-        });
-        // First open with nothing saved: look around once by ourselves.
-        check().then((st) => { if (st !== 'on' && !urlIn.value) nhCmDiscover().then((hit) => { if (hit) saveUrl(hit); }); });
-      })();
-
       const sessSec = document.createElement('section');
       sessSec.className = 'nh-card nh-tab-admin';
       sessSec.innerHTML = '<h2 class="nh-card-title">' + (T.seshTitle || PANEL_T.en.seshTitle) + '</h2>' +
@@ -2834,6 +2421,17 @@
       });
       drawer.appendChild(link);
     });
+
+    const custLink = document.createElement('a');
+    custLink.href = 'javascript:void(0)';
+    custLink.innerHTML = `<span class="material-symbols">palette</span><span class="nh-drawer-label">${panelT().gearLabel || 'Customizations'}</span>`;
+    custLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.body.classList.remove('nh-menu-open');
+      openSettingsModal();
+    });
+    drawer.appendChild(custLink);
+
     drawer.dataset.sig = nhDrawerSig(rail);
   }
 
@@ -2901,7 +2499,8 @@
   function injectGearButton() {
     if (document.getElementById('nh-gear-btn')) return;
     const statsBtn = document.querySelector('#appbar a[href*="/stats"]');
-    if (!statsBtn) return;
+    const target = statsBtn || document.querySelector('#appbar button[aria-label="Account"]') || document.querySelector('#appbar button[aria-label*="user" i]') || document.querySelector('#appbar .account-btn') || document.querySelector('#appbar > div:last-child');
+    if (!target || !target.parentNode) return;
 
     const gear = document.createElement('a');
     gear.id = 'nh-gear-btn';
@@ -2915,7 +2514,7 @@
       openSettingsModal();
     });
 
-    statsBtn.parentNode.insertBefore(gear, statsBtn);
+    target.parentNode.insertBefore(gear, target);
   }
 
   function openSettingsModal() {
@@ -2954,7 +2553,7 @@
     ensureConfigNavItem();
 
     const path = window.location.pathname;
-    const isConfigRoot = path === '/audiobookshelf/config' || path === '/audiobookshelf/config/';
+    const isConfigRoot = /\/config\/?$/.test(path);
 
     if (!isConfigRoot) {
       const ep = document.getElementById('nh-settings-panel');
@@ -3023,7 +2622,7 @@
 
      if (railStats && railStats.getAttribute('href').includes('/library/')) {
          const libHref = railStats.getAttribute('href');
-         railStats.setAttribute('href', '/audiobookshelf/config/stats');
+         railStats.setAttribute('href', (getBaseNH() || '') + '/config/stats');
          if (topStats) topStats.setAttribute('href', libHref);
      }
   }
