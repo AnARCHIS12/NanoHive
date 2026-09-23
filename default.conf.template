@@ -19,9 +19,6 @@ map $http_x_forwarded_proto $nh_fwd_proto {
 # (load_module line added in the Dockerfile).
 js_path "/etc/nginx/njs/";
 js_import nh_ratings from nh-ratings.js;
-# Goodreads helper address (#27), resolved per request: the admin-saved value in
-# server-config.json beats the NH_GOODREADS_UPSTREAM env, so no restart is needed.
-js_set $nh_gr_upstream nh_ratings.grUpstream;
 
 # The theme is INLINED into the HTML shell, so a browser that heuristically caches
 # the shell keeps running an OLD theme build after a redeploy (stale until a hard
@@ -37,15 +34,15 @@ server {
     listen 80;
     server_name _;
     client_max_body_size 0;
-    # The same fat OIDC session cookie (#32) comes BACK on every request; the
-    # stock 8k line limit would turn it into a 400 "Request Header Too Large".
+
+    # OIDC session cookie buffer support
     large_client_header_buffers 4 32k;
 
-    # NH_SOCIAL env for njs (#25): set at SERVER level so every njs location
-    # (social, stats, progress) sees the assigned value - a per-location set
-    # would leave it empty everywhere else.
-    set $nh_social_env "${NH_SOCIAL}";
-    set $nh_gr_env "${NH_GOODREADS_UPSTREAM}";
+    # Security Headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ws: wss:; media-src 'self' blob:; frame-ancestors 'self';" always;
 
     gzip on;
     gzip_comp_level 5;
@@ -74,21 +71,12 @@ server {
     }
 
     # Per-collection icon + accent overrides, chosen in the theme's collection UI.
-    # GET is public for the same reason server-config.json is: every visitor renders
-    # the same tiles, so there is nothing to protect. Writes go through the
-    # admin-gated /_nh/data/ DAV location below, exactly like the logo and the
-    # series covers. Kept OUT of server-config.json on purpose: the settings panel
-    # PUTs that file wholesale, so anything else stored there gets erased on the
-    # next "save server defaults".
     location = /_nh/collection-art.json {
         alias /data/nh/collection-art.json;
         default_type application/json;
         add_header Cache-Control "no-store";
         add_header X-Content-Type-Options "nosniff" always;
         access_log off;
-        # Before the first icon is ever chosen the file does not exist. Serve an
-        # empty store rather than a 404, so a fresh install does not log a console
-        # error on every page load.
         error_page 404 = @nh_empty_art;
     }
     location @nh_empty_art {
@@ -97,12 +85,7 @@ server {
         return 200 '{"v":1,"cols":{}}';
     }
 
-    # Self-hosted custom logo - works with NO internet access. Drop an image into the
-    # nh_theme_data volume as /data/nh/logo.<ext> (via a bind-mount, `docker cp`, or the
-    # admin settings panel's PUT to /_nh/data/logo.<ext>), then set the logo to
-    # /_nh/logo.<ext>. It is served same-origin from the local volume, so the client never
-    # reaches out to an external host. Public read (a logo is not secret); regex wins over
-    # the /_nh/ prefix above so theme files are unaffected.
+    # Self-hosted custom logo - works with NO internet access.
     location ~ ^/_nh/(logo\.(?:png|svg|jpe?g|webp|gif|avif|ico))$ {
         alias /data/nh/$1;
         add_header Cache-Control "public, max-age=300";
@@ -110,17 +93,7 @@ server {
         access_log off;
     }
 
-    # The next three locations serve files an admin can REPLACE IN PLACE at the same
-    # path, so they are sent "no-cache": the browser keeps its copy but has to ask
-    # before reusing it, and nginx answers 304 from the ETag when nothing changed.
-    # They used to be "public, max-age=300", which let a browser show a stale series
-    # cover for five minutes after it was replaced, on every account except the one
-    # that happened to upload it. Do not put max-age back on a mutable path.
-    #
-    # Custom series covers (A1) - admin-uploaded images that replace the stacked-books
-    # tile. Files live in the nh_theme_data volume as /data/nh/series-covers/<seriesId>.<ext>
-    # (written via the admin DAV path below). Public read like the logo: a cover is not
-    # secret, and cards need it without an Authorization header.
+    # Custom series covers
     location ~ "^/_nh/series-covers/([A-Za-z0-9_-]{4,64}\.(?:png|jpe?g|webp|gif|avif))$" {
         alias /data/nh/series-covers/$1;
         add_header Cache-Control "no-cache";
@@ -128,8 +101,7 @@ server {
         access_log off;
     }
 
-    # Admin-written series description overrides, served as plain text (public
-    # read, same reasoning as covers - the text is shown to every user anyway).
+    # Admin-written series description overrides, served as plain text
     location ~ "^/_nh/series-desc/([A-Za-z0-9_-]{4,64}\.txt)$" {
         alias /data/nh/series-desc/$1;
         default_type "text/plain; charset=utf-8";
@@ -138,9 +110,7 @@ server {
         access_log off;
     }
 
-    # User profile photos (avatars), shown in the server ranking. Public read
-    # like series covers - an avatar is not secret and <img> tags carry no
-    # Authorization header. Regex QUOTED (brace quantifier breaks nginx parse).
+    # User profile photos (avatars)
     location ~ "^/_nh/user-avatars/([A-Za-z0-9_-]{4,64}\.(?:png|jpe?g|webp|gif))$" {
         alias /data/nh/user-avatars/$1;
         add_header Cache-Control "no-cache";
@@ -148,13 +118,7 @@ server {
         access_log off;
     }
 
-    # Avatar write API (njs): POST raw image bytes (type sniffed from magic
-    # bytes), DELETE = remove; ?forUser=<id> targets a user. ADMIN-ONLY by
-    # design (Pawel: users don't set their own) - gated by admincheck at the
-    # nginx layer, because newer ABS JWTs have no `type` claim and admin-ness
-    # canNOT be read from the token payload. Body must be buffered in MEMORY
-    # (buffer >= max size) or njs r.requestBuffer is empty (temp-file bodies
-    # are invisible to js_content).
+    # Avatar write API (njs) - Admin only
     location = /_nh/api/avatar-admin {
         auth_request /_nh/admincheck;
         set $nh_avatar_admin 1;
@@ -163,25 +127,13 @@ server {
         js_content nh_ratings.avatar;
     }
 
-    # Which series have a custom cover / description (+ which users have an
-    # avatar): njs lists the folders and returns { covers: {id: ext}, descs:
-    # {id: 1}, avatars: {userId: ext} } - one call, no per-card probes.
+    # Series metadata probe (custom cover / description / avatar)
     location = /_nh/api/series-meta {
         auth_request /_nh/api/whoami;
         js_content nh_ratings.meta;
     }
 
-    # Server-wide ratings (njs JSON API). GET returns the shared ratings store,
-    # POST writes the caller's own rating. Store: /data/nh/ratings.json.
-    #
-    # Auth: auth_request (NOT an njs subrequest). ABS's /api/me body includes the
-    # caller's ENTIRE media progress - ~90KB for an active listener - and njs
-    # subrequests buffer the response in memory, sized from Content-Length, so any
-    # real account overflowed it ("too big subrequest response") and the request
-    # died with an empty reply. auth_request only needs the status and DISCARDS
-    # the body at any size (same mechanism as the /_nh/data/ admincheck, proven
-    # at scale). Identity then comes from the JWT payload in njs - safe to decode
-    # unverified, because auth_request just had ABS validate that exact token.
+    # Server-wide internal ratings (njs JSON API)
     location = /_nh/api/ratings {
         auth_request /_nh/api/whoami;
         client_max_body_size 64k;
@@ -189,11 +141,7 @@ server {
         js_content nh_ratings.handle;
     }
 
-    # MODERATION path: same handler, but admin-gated by nginx so an admin can
-    # remove SOMEONE ELSE's rating. It needs its own location because admin-ness
-    # canNOT be read from the token - newer ABS JWTs carry no `type` claim, so
-    # the payload check inside the handler silently refused every admin. Exactly
-    # the same reasoning (and shape) as /_nh/api/avatar-admin above.
+    # Moderation path: admin-gated
     location = /_nh/api/ratings-admin {
         auth_request /_nh/admincheck;
         set $nh_ratings_admin 1;
@@ -202,35 +150,12 @@ server {
         js_content nh_ratings.handle;
     }
 
-    # Problem reports. Any signed-in user may POST one from a book page; the
-    # queue itself carries other people's names, so READING and CLEARING it are
-    # admin-only and go through the gated twin below.
+    # Problem reports: local internal reports
     location = /_nh/api/reports {
         auth_request /_nh/api/whoami;
         client_max_body_size 16k;
         client_body_buffer_size 16k;
         js_content nh_ratings.reports;
-    }
-
-    # Started-date overrides (ABS refuses to store a client startedAt - see the
-    # njs note). Per-user, readable and writable only by the owner.
-    location = /_nh/api/dates {
-        auth_request /_nh/api/whoami;
-        client_max_body_size 8k;
-        client_body_buffer_size 8k;
-        js_content nh_ratings.dates;
-    }
-
-    # Per-user theme preferences (#12), so a shared browser stops handing one
-    # person's look to the next and settings follow a user between browsers.
-    # Body cap is deliberately larger than the 16k the handler stores: nginx has
-    # to accept the request before njs can measure and reject it, and njs cannot
-    # read a body nginx spooled to a temp file.
-    location = /_nh/api/prefs {
-        auth_request /_nh/api/whoami;
-        client_max_body_size 32k;
-        client_body_buffer_size 32k;
-        js_content nh_ratings.prefs;
     }
 
     location = /_nh/api/reports-admin {
@@ -241,191 +166,20 @@ server {
         js_content nh_ratings.reports;
     }
 
-    # Shared listening summaries (A5). Each participating browser POSTs a summary
-    # of its OWN /api/me/listening-stats; any authenticated user may GET the store
-    # to render the family board. DELETE removes the caller's record (opt-out).
-    # Identity is the JWT's userId - the body can never name another user.
-    location = /_nh/api/stats {
-        auth_request /_nh/api/whoami;
-        client_max_body_size 64k;
-        client_body_buffer_size 64k;   # njs r.requestText is empty for temp-file bodies
-        js_content nh_ratings.stats;
-    }
-
-    # Admin seeding twin (round 11): an admin's browser posts EVERY user's
-    # summary here (?forUser=<id>) so the family board is complete even for
-    # people who never open the web app. Same nginx admin gate as the other
-    # -admin twins (JWTs carry no type claim); the handler itself refuses to
-    # overwrite an opt-out tombstone.
-    location = /_nh/api/stats-admin {
-        auth_request /_nh/admincheck;
-        set $nh_stats_admin 1;
-        client_max_body_size 64k;
-        client_body_buffer_size 64k;
-        js_content nh_ratings.stats;
-    }
-
-    # Social switches (#25): what this server shares between users at all.
-    # Reads resolve admin file > NH_SOCIAL env > built-ins (time on, content
-    # and who's-reading off). $nh_social_env carries the env var into njs.
-    location = /_nh/api/social {
-        auth_request /_nh/api/whoami;
-        js_content nh_ratings.social;
-    }
-
-    # Admin twin: saves the flags and excludes/includes specific users, same
-    # nginx admin gate as the other -admin routes.
-    location = /_nh/api/social-admin {
-        auth_request /_nh/admincheck;
-        set $nh_social_admin 1;
-        client_max_body_size 16k;
-        client_body_buffer_size 16k;
-        js_content nh_ratings.social;
-    }
-
-    # Shared book progress (#23). Same contract as /_nh/api/stats: each browser
-    # POSTs a summary of its OWN /api/me mediaProgress, any authenticated user
-    # may GET (?item=<id> for the book page's tiny per-item view), DELETE is the
-    # caller's opt-out tombstone.
-    location = /_nh/api/progress {
-        auth_request /_nh/api/whoami;
-        client_max_body_size 64k;
-        client_body_buffer_size 64k;   # njs r.requestText is empty for temp-file bodies
-        js_content nh_ratings.progress;
-    }
-
-    # Admin seeding twin, same gate and reasoning as /_nh/api/stats-admin.
-    location = /_nh/api/progress-admin {
-        auth_request /_nh/admincheck;
-        set $nh_progress_admin 1;
-        client_max_body_size 64k;
-        client_body_buffer_size 64k;
-        js_content nh_ratings.progress;
-    }
-
-    # Community ratings (#27): one Goodreads score per book, filled in by
-    # browsers through the relay below, readable by every signed-in user
-    # (sort/filter + the book page line).
-    location = /_nh/api/community {
+    # Started-date overrides (local per-user)
+    location = /_nh/api/dates {
         auth_request /_nh/api/whoami;
         client_max_body_size 8k;
         client_body_buffer_size 8k;
-        js_content nh_ratings.community;
-    }
-    location = /_nh/api/community-admin {
-        auth_request /_nh/admincheck;
-        set $nh_community_admin 1;
-        client_max_body_size 256k;
-        client_body_buffer_size 256k;
-        js_content nh_ratings.community;
+        js_content nh_ratings.dates;
     }
 
-    # Goodreads numbers via abs-tract (#27): an OPTIONAL separate container the
-    # admin runs (see README). NH_GOODREADS_UPSTREAM is its /goodreads base,
-    # e.g. http://abs-tract:5555/goodreads, no trailing slash. Empty = not set
-    # up, and the 404 is how the theme knows. A variable proxy_pass with a URI
-    # part replaces the whole request URI, so the path is re-attached from the
-    # location capture and the query string by hand.
-    location ~ ^/_nh/gr/(?<nh_gr_path>.*)$ {
-        auth_request /_nh/api/whoami;
-        if ($nh_gr_upstream = "") { return 404; }
-        resolver ${NH_RESOLVER} valid=30s ipv6=off;
-        resolver_timeout 5s;
-        proxy_connect_timeout 5s;
-        proxy_pass $nh_gr_upstream/$nh_gr_path$is_args$args;
-        proxy_set_header Host $proxy_host;
-        proxy_ssl_server_name on;
-        proxy_set_header Authorization "";
-        proxy_set_header Cookie "";
-        proxy_set_header Accept-Encoding "";
-        proxy_read_timeout 40s;
-    }
-
-    # Background scan (#34): starting and stopping is admin-only; the book list
-    # travels in the POST body (a few MB for a big library). Status is read
-    # through the plain relay above.
-    location ~ ^/_nh/gr-admin/(?<nh_gra_path>scan(?:/stop)?)$ {
-        auth_request /_nh/admincheck;
-        if ($nh_gr_upstream = "") { return 404; }
-        client_max_body_size 16m;
-        resolver ${NH_RESOLVER} valid=30s ipv6=off;
-        resolver_timeout 3s;
-        proxy_connect_timeout 5s;
-        proxy_pass $nh_gr_upstream/$nh_gra_path;
-        proxy_set_header Host $proxy_host;
-        proxy_set_header Authorization "";
-        proxy_set_header Cookie "";
-        proxy_read_timeout 60s;
-    }
-    # Internal: the njs sync pulls finished results from the helper into the
-    # community store, so they land without any browser doing the writing.
-    location /_nh/gr-int/scan/results {
-        internal;
-        subrequest_output_buffer_size 2m;
-        resolver ${NH_RESOLVER} valid=30s ipv6=off;
-        resolver_timeout 3s;
-        proxy_connect_timeout 5s;
-        proxy_pass $nh_gr_upstream/scan/results$is_args$args;
-        proxy_set_header Host $proxy_host;
-        proxy_set_header Authorization "";
-        proxy_set_header Cookie "";
-        proxy_set_header Accept-Encoding "";
-        proxy_read_timeout 20s;
-    }
-    location = /_nh/api/community-sync {
-        auth_request /_nh/api/whoami;
-        js_content nh_ratings.communitySync;
-    }
-
-    # Admin-only discovery probe (#27): asks one candidate helper address the
-    # standard test question, so the settings card can find abs-tract by itself
-    # (ABS custom-provider list, compose service name, the host) and save it.
-    location = /_nh/gr-probe {
-        auth_request /_nh/admincheck;
-        resolver ${NH_RESOLVER} valid=30s ipv6=off;
-        resolver_timeout 3s;
-        if ($arg_up !~ "^https?://[A-Za-z0-9._:-]+(/[A-Za-z0-9._/-]*)?$") { return 400; }
-        if ($arg_p !~ "^(ratings|search)$") { return 400; }
-        set $nh_gr_probe $arg_up;
-        proxy_pass $nh_gr_probe/$arg_p?query=Dune&author=Frank%20Herbert;
-        proxy_set_header Host $proxy_host;
-        proxy_set_header Authorization "";
-        proxy_set_header Cookie "";
-        proxy_set_header Accept-Encoding "";
-        proxy_connect_timeout 3s;
-        proxy_read_timeout 8s;
-        proxy_intercept_errors on;
-        error_page 502 504 = @nh_gr_nope;
-    }
-    location @nh_gr_nope {
-        default_type application/json;
-        return 503 '{"error":"no answer"}';
-    }
-
-    # Hardcover ratings sync (#26). The browser cannot call api.hardcover.app
-    # directly (CORS), so the theme POSTs GraphQL here and nginx relays it. The
-    # caller's ABS token gates the location (not an open relay); the user's own
-    # Hardcover token rides X-NH-HC and becomes the upstream Authorization.
-    # proxy_pass through a VARIABLE so the hostname resolves at request time -
-    # a literal one resolves at startup and would keep nginx from booting on a
-    # server with no internet. 127.0.0.11 is Docker's embedded DNS (compose
-    # networks); the public resolvers cover plain `docker run` bridges.
-    location = /_nh/hc {
+    # Per-user theme preferences
+    location = /_nh/api/prefs {
         auth_request /_nh/api/whoami;
         client_max_body_size 32k;
         client_body_buffer_size 32k;
-        resolver ${NH_RESOLVER} valid=300s ipv6=off;
-        resolver_timeout 5s;
-        set $nh_hc_upstream "${NH_HC_UPSTREAM}";
-        proxy_pass $nh_hc_upstream;
-        proxy_set_header Host api.hardcover.app;
-        proxy_ssl_server_name on;
-        # the ABS token must NOT leak upstream: Authorization is overridden
-        # with the Hardcover token, cookies are stripped
-        proxy_set_header Authorization $http_x_nh_hc;
-        proxy_set_header Cookie "";
-        proxy_set_header X-NH-HC "";
-        proxy_read_timeout 35s;
+        js_content nh_ratings.prefs;
     }
 
     location = /_nh/api/whoami {
@@ -436,14 +190,12 @@ server {
         proxy_set_header Authorization $http_authorization;
     }
 
-    # Admin-only write path. The browser PUTs JSON here with the caller's ABS
-    # bearer token; auth_request replays it against an admin-only ABS endpoint
-    # (/api/users answers 200 only for admins). DAV then writes the file.
+    # Admin-only write path for theme data (logo, series covers, server defaults)
     location /_nh/data/ {
         auth_request /_nh/admincheck;
-        client_max_body_size 4m;   # JSON config is tiny; also allows uploaded logo/cover images
-        dav_methods PUT DELETE;    # DELETE so admins can remove a series cover again
-        create_full_put_path on;   # series-covers/ subdirectory is created on first PUT
+        client_max_body_size 4m;
+        dav_methods PUT DELETE;
+        create_full_put_path on;
         alias /data/nh/;
     }
 
@@ -458,7 +210,7 @@ server {
     location / {
         proxy_pass ${ABS_UPSTREAM};
 
-        # Stale-shell guard (see the map above): HTML must always revalidate.
+        # Stale-shell guard: HTML must always revalidate.
         add_header Cache-Control $nh_html_no_store;
 
         # sub_filter cannot rewrite a compressed upstream body
@@ -475,11 +227,6 @@ server {
         proxy_set_header Connection $connection_upgrade;
 
         proxy_buffering off;
-        # Even with buffering off nginx reads the upstream RESPONSE HEADERS into one
-        # proxy_buffer_size buffer (4k stock). An OIDC callback for a user with many
-        # groups/claims overflows it and the login dies with a 502 "upstream sent too
-        # big header" that never reaches ABS's log (#32). NH_PROXY_BUFFER_SIZE, 16k
-        # default. busy_buffers must be >= buffer_size or nginx refuses the config.
         proxy_buffer_size ${NH_PROXY_BUFFER_SIZE};
         proxy_buffers 8 ${NH_PROXY_BUFFER_SIZE};
         proxy_busy_buffers_size ${NH_PROXY_BUFFER_SIZE};
@@ -490,10 +237,9 @@ server {
         ssi_silent_errors off;
         sub_filter_once on;
 
-        # window.NH_CONFIG carries the operator's defaults and must be defined before
-        # nh-early.js reads it. core.js patches fetch/XHR, so it runs before the ABS bundle.
+        # Injected header and theme scripts (zéro polices externes Google Fonts)
         sub_filter '</head>'
-            '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><style id="nh-fouc-blocker">html{background:${NH_FOUC_BG} !important;}body::after{content:"";position:fixed;inset:0;z-index:2147483000;background:radial-gradient(circle at 80% 0%,var(--nh-amber-shadow,rgba(224,194,122,0.30)) 0%,transparent 60%),radial-gradient(circle at 15% 100%,var(--nh-amber-tint,rgba(224,194,122,0.12)) 0%,transparent 55%),var(--nh-canvas,${NH_FOUC_BG});opacity:1;transition:opacity .45s ease;}html.nh-ready body::after{opacity:0;pointer-events:none;visibility:hidden;transition:opacity .45s ease,visibility 0s linear .5s;}body::before{content:"";position:fixed;top:50%;left:50%;width:38px;height:38px;margin:-19px 0 0 -19px;z-index:2147483001;border-radius:50%;border:3px solid var(--nh-amber-tint,rgba(224,194,122,0.14));border-top-color:var(--nh-amber,#e0c27a);box-shadow:0 0 28px var(--nh-amber-shadow,rgba(224,194,122,0.30));animation:nh-spin .9s linear infinite;transition:opacity .3s ease;}html.nh-ready body::before{opacity:0;visibility:hidden;animation:none;transition:opacity .3s ease,visibility 0s linear .35s;}@keyframes nh-spin{to{transform:rotate(360deg)}}</style><script>setTimeout(function(){document.documentElement.classList.add("nh-ready");},4000);</script><script>window.NH_CONFIG={"appName":"${NH_APP_NAME}","showLogoText":${NH_SHOW_LOGO_TEXT},"colorizeLogo":${NH_COLORIZE_LOGO},"logoUrl":"${NH_LOGO_URL}","accentColor":"${NH_ACCENT_COLOR}","baseTheme":"${NH_BASE_THEME}","mainFont":"${NH_MAIN_FONT}","fontScale":${NH_FONT_SCALE},"carouselTiming":${NH_CAROUSEL_TIMING},"showCustomRecentSeries":${NH_SHOW_RECENT_SERIES},"recentSeriesCount":${NH_RECENT_SERIES_COUNT},"customSeriesCards":${NH_CUSTOM_SERIES_CARDS},"showHeroCarousel":${NH_SHOW_HERO_CAROUSEL},"showRatings":${NH_SHOW_RATINGS},"globalSearch":${NH_GLOBAL_SEARCH},"themeVersion":"${THEME_VERSION}"};</script><script>window.NH_SERVER_CONFIG=<!--# include virtual="/_nh/server-config.json" -->;</script><script><!--# include virtual="/_nh/core.js" --></script><script><!--# include virtual="/_nh/nh-early.js" --></script></head>';
+            '<style id="nh-fouc-blocker">html{background:${NH_FOUC_BG} !important;}body::after{content:"";position:fixed;inset:0;z-index:2147483000;background:radial-gradient(circle at 80% 0%,var(--nh-amber-shadow,rgba(224,194,122,0.30)) 0%,transparent 60%),radial-gradient(circle at 15% 100%,var(--nh-amber-tint,rgba(224,194,122,0.12)) 0%,transparent 55%),var(--nh-canvas,${NH_FOUC_BG});opacity:1;transition:opacity .45s ease;}html.nh-ready body::after{opacity:0;pointer-events:none;visibility:hidden;transition:opacity .45s ease,visibility 0s linear .5s;}body::before{content:"";position:fixed;top:50%;left:50%;width:38px;height:38px;margin:-19px 0 0 -19px;z-index:2147483001;border-radius:50%;border:3px solid var(--nh-amber-tint,rgba(224,194,122,0.14));border-top-color:var(--nh-amber,#e0c27a);box-shadow:0 0 28px var(--nh-amber-shadow,rgba(224,194,122,0.30));animation:nh-spin .9s linear infinite;transition:opacity .3s ease;}html.nh-ready body::before{opacity:0;visibility:hidden;animation:none;transition:opacity .3s ease,visibility 0s linear .35s;}@keyframes nh-spin{to{transform:rotate(360deg)}}</style><script>setTimeout(function(){document.documentElement.classList.add("nh-ready");},4000);</script><script>window.NH_CONFIG={"appName":"${NH_APP_NAME}","showLogoText":${NH_SHOW_LOGO_TEXT},"colorizeLogo":${NH_COLORIZE_LOGO},"logoUrl":"${NH_LOGO_URL}","accentColor":"${NH_ACCENT_COLOR}","baseTheme":"${NH_BASE_THEME}","mainFont":"${NH_MAIN_FONT}","fontScale":${NH_FONT_SCALE},"carouselTiming":${NH_CAROUSEL_TIMING},"showCustomRecentSeries":${NH_SHOW_RECENT_SERIES},"recentSeriesCount":${NH_RECENT_SERIES_COUNT},"customSeriesCards":${NH_CUSTOM_SERIES_CARDS},"showHeroCarousel":${NH_SHOW_HERO_CAROUSEL},"showRatings":${NH_SHOW_RATINGS},"globalSearch":${NH_GLOBAL_SEARCH},"themeVersion":"${THEME_VERSION}"};</script><script>window.NH_SERVER_CONFIG=<!--# include virtual="/_nh/server-config.json" -->;</script><script><!--# include virtual="/_nh/core.js" --></script><script><!--# include virtual="/_nh/nh-early.js" --></script></head>';
 
         sub_filter '</body>'
             '<script><!--# include virtual="/_nh/enhancements.js" --></script><script><!--# include virtual="/_nh/book-details.js" --></script></body>';

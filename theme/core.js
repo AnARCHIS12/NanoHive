@@ -47,10 +47,7 @@
     try { if (String(name).toLowerCase() === 'authorization') nhSniffAuth(value); } catch (e) {}
     return origSetHeader.apply(this, arguments);
   };
-
-  const font = document.createElement('link');
-  font.rel = 'stylesheet';
-  font.href = 'https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&display=swap';
+  // NanoHive Secure: zero external font requests, native system typography
 
   const css = `
 :root {
@@ -70,8 +67,8 @@
   --nh-muted:         #9a9085;
   --nh-muted-2:       #8a8075;
   --nh-icon-base:     #a89f94;
-  --nh-serif:         "Spectral", Georgia, serif;
-  --nh-sans:          system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --nh-serif:         Georgia, Cambria, 'Times New Roman', serif;
+  --nh-sans:          system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --nh-hairline:      rgba(255,255,255,0.06);
   --nh-hairline-lit:  rgba(255,255,255,0.14);
   --nh-font-scale:    1;
@@ -2813,7 +2810,6 @@ body.nh-selecting .nh-rp-badge { visibility: hidden !important; }
   style.id = 'nanohive-abs-theme';
   style.textContent = css;
   (document.head || document.documentElement).appendChild(style);
-  (document.head || document.documentElement).appendChild(font);
 
 
   // ==========================================

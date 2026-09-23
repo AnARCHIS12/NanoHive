@@ -7,15 +7,7 @@
   let isInjectingHero = false;
 
   const GOOGLE_FONTS = ["Spectral", "Inter", "Merriweather", "Montserrat", "Playfair Display", "Oswald", "Raleway", "Nunito", "Ubuntu", "Lora", "Work Sans", "Fira Sans", "Poppins", "Cinzel", "Bitter", "Quicksand"];
-  let fontLink = document.getElementById('nh-custom-font-link');
-  if (!fontLink) {
-    fontLink = document.createElement('link');
-    fontLink.id = 'nh-custom-font-link';
-    fontLink.rel = 'stylesheet';
-    const fontQuery = GOOGLE_FONTS.map(f => `family=${f.replace(/ /g, '+')}:wght@400;500;600;700`).join('&');
-    fontLink.href = `https://fonts.googleapis.com/css2?${fontQuery}&display=swap`;
-    document.head.appendChild(fontLink);
-  }
+  // NanoHive Secure: native typography, zero external font requests
 
   // ==========================================
   // 1. SETTINGS & CUSTOMIZATIONS
@@ -726,17 +718,7 @@
 
       if (style.textContent !== css) style.textContent = css;
 
-      if (nhSettings.mainFont && nhSettings.mainFont.toLowerCase() !== 'spectral') {
-        let customFontLink = document.getElementById('nh-custom-font-link');
-        if (!customFontLink) {
-          customFontLink = document.createElement('link');
-          customFontLink.id = 'nh-custom-font-link';
-          customFontLink.rel = 'stylesheet';
-          document.head.appendChild(customFontLink);
-        }
-        const fontUrl = `https://fonts.googleapis.com/css2?family=${nhSettings.mainFont.replace(/ /g, '+')}:wght@400;500;600;700&display=swap`;
-        if (customFontLink.href !== fontUrl) customFontLink.href = fontUrl;
-      }
+      // NanoHive Secure: zero external font requests
 
       document.querySelectorAll('#appbar a[href$="/"] h1, #page-wrapper img[alt="Audiobookshelf Logo"] + h1').forEach(function (brand) {
         brand.textContent = nhSettings.appName || 'audiobookshelf';
@@ -2580,16 +2562,8 @@
           // question would come back 401 and the card would call a live
           // helper dead. Wait for the token first.
           if (!nhSrToken() && n < 6) return new Promise((res) => setTimeout(res, 1000)).then(() => check(n + 1));
-          const H = { headers: { Authorization: 'Bearer ' + nhSrToken() }, credentials: 'include' };
-          const ask = (p) => fetch('/_nh/gr/' + p + '?query=Dune&author=Frank%20Herbert', H);
-          // Our helper answers its scan status without touching Goodreads, and
-          // that is the "is it there" question: a Goodreads test lookup fails
-          // while a scan hogs the shared key and made a live helper look dead.
-          // A stock abs-tract (404 there) still gets the Dune question.
-          return fetch('/_nh/gr/scan', H).then((r) => (r.ok ? r.json().then(() => { nhCm.gr = true; return 'on'; }) : null)).catch(() => null)
-            .then((st) => st || ask('ratings').then((r) => (r.status === 404 ? ask('search') : r))
-              .then((r) => { if (r.status === 404) { nhCm.gr = false; return 'off'; } if (!r.ok) return 'down'; return r.json().then((j) => { const m = (j && j.matches) || []; nhCm.gr = true; return m.some((x) => typeof x.goodreadsRatingsCount === 'number') ? 'on' : 'nonum'; }); })
-              .catch(() => 'down'))
+          nhCm.gr = false;
+          return Promise.resolve('off')
             .then((st) => {
               const K = { off: 'cmGrOff', down: 'cmGrDown', on: 'cmGrOn', nonum: 'cmGrNoNum' }[st];
               // A hiccup (helper just restarted, busy with a scan, Goodreads
@@ -6822,43 +6796,7 @@
   // the wild: they cost Pawel a "Mind Hack unmatched") retry with a backoff;
   // real GraphQL errors do not.
   function nhHcGql(query) {
-    const once = () => {
-      const wait = Math.max(0, nhHc.last + NH_HC_GAP - Date.now());
-      return new Promise((res) => setTimeout(res, wait)).then(() => {
-        nhHc.last = Date.now();
-        return fetch('/_nh/hc', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer ' + nhSrToken(),
-            'X-NH-HC': 'Bearer ' + nhHcKey(),
-          },
-          credentials: 'include',
-          body: JSON.stringify({ query: query }),
-        });
-      }).then((r) => r.text().then((txt) => {
-        let j = null;
-        try { j = JSON.parse(txt); } catch (e) {}
-        if (!r.ok || !j) { const e2 = new Error('hc transport ' + r.status); e2.transient = true; throw e2; }
-        if (j.errors && j.errors.length) {
-          const msg = j.errors[0].message || 'hc error';
-          const e3 = new Error(msg);
-          e3.transient = /rate|throttl|timeout|limit/i.test(msg);
-          throw e3;
-        }
-        return j.data || {};
-      }));
-    };
-    const run = () => once().catch((e) => {
-      if (!e.transient) throw e;
-      return new Promise((res) => setTimeout(res, 2500)).then(once).catch((e2) => {
-        if (!e2.transient) throw e2;
-        return new Promise((res) => setTimeout(res, 6000)).then(once);
-      });
-    });
-    const p = nhHc.q.then(run, run);
-    nhHc.q = p.catch(() => {});
-    return p;
+    return Promise.reject(new Error('Hardcover sync is disabled in NanoHive Secure'));
   }
 
   // ---- Community matcher (#27): Goodreads through the abs-tract helper ----
@@ -6926,24 +6864,8 @@
   // only has /search, which is slow and fails under load, so it is the fallback.
   // A 5xx gets two more tries (2s, 5s): the shared Goodreads key is rate limited.
   function nhCmGr(query, attempt) {
-    if (nhCm.gr === false) return Promise.resolve(null);
-    const path = nhCm.lean === false ? 'search' : 'ratings';
-    return fetch('/_nh/gr/' + path + '?' + query, { headers: { Authorization: 'Bearer ' + nhSrToken() }, credentials: 'include' })
-      .then((r) => {
-        if (r.status === 404) {
-          if (path === 'ratings') { nhCm.lean = false; return nhCmGr(query, attempt); }
-          nhCm.gr = false; return null;
-        }
-        if (!r.ok) {
-          // an expired login is not Goodreads being slow: no retries, ABS will ask to sign in again
-          if (r.status === 401 || r.status === 403) throw new Error('gr auth ' + r.status);
-          if ((attempt || 0) < 2) return new Promise((res) => setTimeout(res, (attempt || 0) ? 5000 : 2000)).then(() => nhCmGr(query, (attempt || 0) + 1));
-          throw new Error('gr ' + r.status);
-        }
-        nhCm.gr = true;
-        return r.json();
-      })
-      .then((j) => (j && Array.isArray(j.matches) ? j.matches : (Array.isArray(j) ? j : [])));
+    nhCm.gr = false;
+    return Promise.resolve(null);
   }
   function nhCmCandGr(m) {
     const t = String(m.title || '') + (m.subtitle ? ': ' + m.subtitle : '');
@@ -7049,62 +6971,20 @@
           // "Everything again" re-checks every book except the admin's manual picks.
           const todo = books.filter((b) => { const e = have[b.id]; if (!e) return true; if (e.manual || (!all && (typeof e.r === 'number' || (e.miss && e.at > fresh)))) { skipped++; return false; } return true; });
           self.skipped = skipped;
-          if (!todo.length) return { nothing: true };
-          return fetch('/_nh/gr-admin/scan', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + nhSrToken() }, credentials: 'include', body: JSON.stringify({ books: todo }) })
-            .then((r) => { if (r.status === 409) return { busy: true }; if (!r.ok) throw new Error('scan ' + r.status); return r.json(); });
+          return Promise.resolve({ nothing: true });
         });
     },
-    status() { return fetch('/_nh/gr/scan', this.H()).then((r) => (r.ok ? r.json() : null)).catch(() => null); },
-    missed() { return fetch('/_nh/gr/scan/missed', this.H()).then((r) => (r.ok ? r.json() : null)).then((j) => ((j && j.items) || [])).catch(() => []); },
-    stop() { return fetch('/_nh/gr-admin/scan/stop', Object.assign({ method: 'POST' }, this.H())).catch(() => {}); },
-    // Pull whatever the helper has finished into the community store (server
-    // side; nothing is uploaded from here). Cheap when there is nothing new.
-    sync() { return fetch('/_nh/api/community-sync', this.H()).then((r) => (r.ok ? r.json() : null)).catch(() => null); },
+    status() { return Promise.resolve(null); },
+    missed() { return Promise.resolve([]); },
+    stop() { return Promise.resolve(); },
+    sync() { return Promise.resolve(null); },
   };
-  // Every open page does the pulling, once a minute, for as long as a helper
-  // is set up: a scan finishes into the store even if the admin closed the
-  // settings long ago. Stops for the session when there is no helper.
-  const nhCmSync = { at: Date.now() - 50000, off: false, busy: false };
+  const nhCmSync = { at: Date.now(), off: true, busy: false };
   function nhCmSyncTick() {
-    if (nhCmSync.off || nhCmSync.busy || nhCm.dead || nhCm.gr === false || !nhCmOn()) return;
-    if (Date.now() - nhCmSync.at < 60000 || !nhSrToken()) return;
-    nhCmSync.at = Date.now(); nhCmSync.busy = true;
-    nhCmScan.sync().then((j) => {
-      nhCmSync.busy = false;
-      if (j && j.helper === 'off') { nhCmSync.off = true; return; }
-      if (j && j.pulled) { nhCm.at = 0; nhCm.items = null; nhCmItems(); try { nhLf.viewSig = ''; } catch (e) {} }
-    });
+    return;
   }
-  // Where might the helper be? ABS's own custom metadata providers first (an
-  // abs-tract used for metadata already has its URL there), then the compose
-  // service name, the docker host, and the host this page was opened on. Each
-  // candidate is asked one question through the admin-only probe; the first
-  // one that answers with rating numbers wins.
   function nhCmDiscover() {
-    const H = { headers: { Authorization: 'Bearer ' + nhSrToken() }, credentials: 'include' };
-    const norm = (u) => String(u || '').trim().replace(/\/+$/, '');
-    const cands = [];
-    const push = (u) => { u = norm(u); if (u && /^https?:\/\//.test(u) && cands.indexOf(u) < 0) cands.push(u); };
-    return fetch('/api/custom-metadata-providers', H).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((j) => {
-      ((j && j.providers) || []).forEach((p) => {
-        const u = norm(p.url);
-        if (!u) return;
-        push(u);
-        if (!/\/goodreads$/.test(u)) push(u.replace(/\/[^/]*$/, '') + '/goodreads');
-      });
-      ['http://abs-tract:5555/goodreads', 'http://host.docker.internal:5555/goodreads', 'http://' + location.hostname + ':5555/goodreads', 'http://172.17.0.1:5555/goodreads', 'http://127.0.0.1:5555/goodreads'].forEach(push);
-      const tryOne = (i) => {
-        if (i >= cands.length) return null;
-        const probe = (p) => fetch('/_nh/gr-probe?p=' + p + '&up=' + cands[i], H).then((r) => (r.ok ? r.json() : (r.status === 404 && p === 'ratings' ? probe('search') : null))).catch(() => null);
-        return probe('ratings')
-          .then((j2) => {
-            const m = (j2 && j2.matches) || [];
-            if (m.length && m.some((x) => typeof x.goodreadsRatingsCount === 'number')) return cands[i];
-            return tryOne(i + 1);
-          });
-      };
-      return tryOne(0);
-    });
+    return Promise.resolve(null);
   }
   window.__nhCmOff = () => nhCm.gr === false || !nhCmOn();
   window.__nhCmEnabled = nhCmOn;
@@ -13333,104 +13213,9 @@
     return { total: Math.round(st.totalTime || 0), days: days, books: books };
   }
 
-  function nhFsAdminSeed() {
-    if (!isUserAdmin()) return;
-    // #25: gated on the SERVER's social flags, not on the admin's personal
-    // toggle, this browser publishes other people's summaries.
-    const socA = nhSocEff();
-    if (!socA || !socA.time) return;
-    const tok = nhSrToken();
-    if (!tok || nhFsa.busy || nhFsa.tried > 2) return;
-    let last = 0;
-    try { last = parseInt(localStorage.getItem('nh-fsa-ts'), 10) || 0; } catch (e) {}
-    if (Date.now() - last < NH_FS_EVERY) return;
-    nhFsa.busy = true; nhFsa.tried++;
-    const H = { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' };
-    Promise.all([
-      fetch('/api/users', { headers: H }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-      fetch('/_nh/api/stats', { headers: H, credentials: 'include' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-    ]).then(async (res) => {
-      const us = ((res[0] && (res[0].users || res[0])) || []).filter((u) => u && u.isActive !== false);
-      if (!us.length) { nhFsa.busy = false; return; } // /api/users failed, not an admin session after all
-      const shared = (res[1] && res[1].users) || {};
-      for (const u of us) {
-        if (shared[u.id] && shared[u.id].out) continue;
-        try {
-          const st = await fetch('/api/users/' + u.id + '/listening-stats', { headers: H }).then((r) => (r.ok ? r.json() : null));
-          if (!st) continue;
-          const sum = nhFsAdminSummary(st);
-          // The seeder NEVER sends titles: it cannot know another user's
-          // shareReading consent, so content only ever arrives from the user's
-          // own browser (and njs drops titles on the forUser path anyway).
-          sum.books = [];
-          sum.user = u.username;
-          await fetch('/_nh/api/stats-admin?forUser=' + encodeURIComponent(u.id), { method: 'POST', headers: H, credentials: 'include', body: JSON.stringify(sum) });
-        } catch (e) {}
-      }
-      try { localStorage.setItem('nh-fsa-ts', String(Date.now())); } catch (e) {}
-      nhFsa.busy = false;
-    }).catch(() => { nhFsa.busy = false; });
-  }
+  function nhFsAdminSeed() { return; }
+  function nhFamilyStatsSync() { return; }
 
-  function nhFamilyStatsSync() {
-    const tok = nhSrToken();
-    if (!tok) return;
-    const on = nhSettings.familyStats === true;
-    if (!on) {
-      // #25: unconditional once per load, same reasoning as the progress sync,       // the joined-flag guard left never-opted-in users without any tombstone.
-      if (!nhFs.cleared && !nhFs.busy) {
-        nhFs.busy = true;
-        fetch('/_nh/api/stats', { method: 'DELETE', headers: { Authorization: 'Bearer ' + tok } })
-          .then((r) => {
-            if (r && r.ok) nhFs.cleared = true;
-            try { localStorage.removeItem('nh-fs-on'); localStorage.removeItem('nh-fs-ts'); } catch (e) {}
-            nhSbInvalidate(); // drop off the board now, not on the next reload
-          })
-          .catch(() => {})
-          .then(() => { nhFs.busy = false; });
-      }
-      return;
-    }
-    nhFs.cleared = false;
-    const soc = nhSocEff();
-    // Same as the progress sync: the user's own post always goes out so a stale
-    // tombstone can heal; the server serves nothing while its flag is off.
-    if (!soc) return; // still resolving
-    if (nhFs.busy || nhFs.tried > 3) return;
-    let last = 0;
-    try { last = parseInt(localStorage.getItem('nh-fs-ts'), 10) || 0; } catch (e) {}
-    if (Date.now() - last < NH_FS_EVERY) return;
-    nhFs.busy = true; nhFs.tried++;
-    fetch('/api/me/listening-stats', { headers: { Authorization: 'Bearer ' + tok } })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((st) => {
-        if (!st) throw new Error('no stats');
-        const days = {};
-        const src = st.days || {};
-        Object.keys(src).sort().slice(-NH_FS_DAYS).forEach((k) => { if (src[k] > 0) days[k] = Math.round(src[k]); });
-        const items = st.items || {};
-        const books = Object.keys(items).map((k) => ({
-          t: (items[k].mediaMetadata && items[k].mediaMetadata.title) || '',
-          s: Math.round(items[k].timeListening || 0),
-        })).filter((b) => b.t && b.s > 0).sort((a, b) => b.s - a.s).slice(0, 10);
-        // Titles ride along only with BOTH consents: the user's own shareReading
-        // toggle (opt-in, #Pawel) and the server's content flag.
-        const withTitles = nhSettings.shareReading === true && soc.content;
-        return fetch('/_nh/api/stats', {
-          method: 'POST',
-          headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ total: Math.round(st.totalTime || 0), days: days, books: withTitles ? books : [] }),
-        });
-      })
-      .then((r) => {
-        if (r && r.ok) {
-          try { localStorage.setItem('nh-fs-on', '1'); localStorage.setItem('nh-fs-ts', String(Date.now())); } catch (e) {}
-          nhSbInvalidate(); // the board includes us again
-        }
-      })
-      .catch(() => {})
-      .then(() => { nhFs.busy = false; });
-  }
 
   // ---- Social switches (#25) ----
   // What this server shares between users, resolved SERVER-SIDE (admin file >
@@ -13484,95 +13269,9 @@
     return { reading: reading.slice(0, 40), done: done.slice(0, 600) };
   }
 
-  function nhFamilyProgressSync() {
-    const tok = nhSrToken();
-    if (!tok) return;
-    // Governed by the OPT-IN shareReading toggle (Pawel split the consent):
-    // which books you read is a different disclosure from how long you listen.
-    const on = nhSettings.shareReading === true;
-    if (!on) {
-      // #25: the tombstone DELETE is UNCONDITIONAL (once per page load), not
-      // gated on having joined from this browser. The old joined-flag guard
-      // meant a user who never opted in, or who opted out on another device,       // never wrote a tombstone, and the admin seeder then published them.
-      // The server no-ops when the tombstone already exists, so this is cheap.
-      if (!nhPg.cleared && !nhPg.busy) {
-        nhPg.busy = true;
-        fetch('/_nh/api/progress', { method: 'DELETE', headers: { Authorization: 'Bearer ' + tok } })
-          .then((r) => {
-            if (r && r.ok) nhPg.cleared = true;
-            try { localStorage.removeItem('nh-pg-on'); localStorage.removeItem('nh-pg-ts'); } catch (e) {}
-          })
-          .catch(() => {})
-          .then(() => { nhPg.busy = false; });
-      }
-      return;
-    }
-    nhPg.cleared = false;
-    const soc = nhSocEff();
-    // Post whenever the USER's toggle is on, even while the server flag is off:
-    // the record stays dark until an admin enables the feature, but the post
-    // lifts any stale plain tombstone (andrzej case) so consent state is true.
-    if (!soc) return; // still resolving
-    if (nhPg.busy || nhPg.tried > 3) return;
-    let last = 0;
-    try { last = parseInt(localStorage.getItem('nh-pg-ts'), 10) || 0; } catch (e) {}
-    if (Date.now() - last < NH_PG_EVERY) return;
-    let mp = null;
-    try { mp = window.$nuxt.$store.state.user.user.mediaProgress; } catch (e) {}
-    if (!mp) return;
-    nhPg.busy = true; nhPg.tried++;
-    fetch('/_nh/api/progress', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
-      body: JSON.stringify(nhPgSummary(mp)),
-    })
-      .then((r) => {
-        if (r && r.ok) {
-          try { localStorage.setItem('nh-pg-on', '1'); localStorage.setItem('nh-pg-ts', String(Date.now())); } catch (e) {}
-        }
-      })
-      .catch(() => {})
-      .then(() => { nhPg.busy = false; });
-  }
+  function nhFamilyProgressSync() { return; }
+  function nhPgAdminSeed() { return; }
 
-  // Admin seeding twin, the nhFsAdminSeed shape: the book page is complete even
-  // for people who never open the web app. Tombstones are respected here and
-  // enforced again server-side.
-  function nhPgAdminSeed() {
-    if (!isUserAdmin()) return;
-    // #25: the server switch decides, not the admin's own setting
-    const socA = nhSocEff();
-    if (!socA || !socA.whoReading) return;
-    const tok = nhSrToken();
-    if (!tok || nhPga.busy || nhPga.tried > 2) return;
-    let last = 0;
-    try { last = parseInt(localStorage.getItem('nh-pga-ts'), 10) || 0; } catch (e) {}
-    if (Date.now() - last < NH_FS_EVERY) return;
-    nhPga.busy = true; nhPga.tried++;
-    const H = { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' };
-    Promise.all([
-      fetch('/api/users', { headers: H }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-      fetch('/_nh/api/progress', { headers: H, credentials: 'include' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-    ]).then(async (res) => {
-      const us = ((res[0] && (res[0].users || res[0])) || []).filter((u) => u && u.isActive !== false);
-      if (!us.length) { nhPga.busy = false; return; } // /api/users failed, not an admin session after all
-      const shared = (res[1] && res[1].users) || {};
-      for (const u of us) {
-        // shareReading is ON by default now, so absence is not a refusal and
-        // absent users are seedable. Tombstones (the explicit "no") still are.
-        if (shared[u.id] && shared[u.id].out) continue;
-        try {
-          const full = await fetch('/api/users/' + u.id, { headers: H }).then((r) => (r.ok ? r.json() : null));
-          if (!full || !Array.isArray(full.mediaProgress)) continue;
-          const sum = nhPgSummary(full.mediaProgress);
-          sum.user = u.username;
-          await fetch('/_nh/api/progress-admin?forUser=' + encodeURIComponent(u.id), { method: 'POST', headers: H, credentials: 'include', body: JSON.stringify(sum) });
-        } catch (e) {}
-      }
-      try { localStorage.setItem('nh-pga-ts', String(Date.now())); } catch (e) {}
-      nhPga.busy = false;
-    }).catch(() => { nhPga.busy = false; });
-  }
 
   // ---- Year in Review: the caller's own last 12 months ----
   function nhYirMonthKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
@@ -14158,7 +13857,7 @@
 
   function nhDecorateContents(c) {
     const eff = nhEreaderEff();
-    try { if (eff.font) c.addStylesheet(eff.font === 'OpenDyslexic' ? NH_DYS_CSS : 'https://fonts.googleapis.com/css2?family=' + eff.font.replace(/ /g, '+') + ':ital,wght@0,400;0,700;1,400&display=swap'); } catch (e) {}
+    // NanoHive Secure: zero external font stylesheet loading
     if (eff.fg || eff.bg) {
       const all = {}, links = {};
       if (eff.fg) { all.color = eff.fg + '!important'; links.color = eff.fg + '!important'; }
@@ -14213,16 +13912,7 @@
   }
 
   function nhEreaderFontsLink() {
-    if (document.getElementById('nh-er-fonts')) return;
-    const l = document.createElement('link');
-    l.id = 'nh-er-fonts'; l.rel = 'stylesheet';
-    l.href = 'https://fonts.googleapis.com/css2?' + NH_EREADER_FONTS.map(function (f) { return 'family=' + f.replace(/ /g, '+') + ':wght@400;600'; }).join('&') + '&display=swap';
-    if (!document.getElementById('nh-er-dys-css')) {
-      const d = document.createElement('link');
-      d.id = 'nh-er-dys-css'; d.rel = 'stylesheet'; d.href = NH_DYS_CSS;
-      document.head.appendChild(d);
-    }
-    document.head.appendChild(l);
+    // NanoHive Secure: zero external font requests
   }
 
   const NH_ER_FG_SWATCHES = ['#ffffff', '#e8e0d2', '#c9c2b6', '#5b4636', '#2e2a24', '#000000'];

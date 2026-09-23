@@ -26,25 +26,10 @@ for var in NH_SHOW_LOGO_TEXT NH_COLORIZE_LOGO NH_SHOW_RECENT_SERIES NH_CUSTOM_SE
   esac
 done
 
-# NH_SOCIAL lands inside the nginx config verbatim; empty means "use defaults".
-case "$NH_SOCIAL" in
-  ''|true|false) ;;
-  *) echo "ERROR: NH_SOCIAL must be 'true', 'false' or unset (got '$NH_SOCIAL')" >&2; exit 1 ;;
-esac
-
 # NH_PROXY_BUFFER_SIZE lands in three nginx directives verbatim (#32).
 case "$NH_PROXY_BUFFER_SIZE" in
   [0-9]*[0-9]|[0-9]*[0-9][kKmM]) ;;
   *) echo "ERROR: NH_PROXY_BUFFER_SIZE must be an nginx size like 16k or 32k (got '$NH_PROXY_BUFFER_SIZE')" >&2; exit 1 ;;
-esac
-
-# NH_GOODREADS_UPSTREAM (#27) is optional: empty, or the abs-tract /goodreads
-# base URL without a trailing slash (the proxy appends the path itself).
-case "$NH_GOODREADS_UPSTREAM" in
-  '') ;;
-  http://*/|https://*/) echo "ERROR: NH_GOODREADS_UPSTREAM must not end with a slash (got '$NH_GOODREADS_UPSTREAM')" >&2; exit 1 ;;
-  http://*|https://*) ;;
-  *) echo "ERROR: NH_GOODREADS_UPSTREAM must start with http:// or https:// (got '$NH_GOODREADS_UPSTREAM')" >&2; exit 1 ;;
 esac
 
 # UI-saved server defaults live here; mount a volume at /data/nh to keep them
@@ -54,8 +39,6 @@ mkdir -p /data/nh
 [ -f /data/nh/server-config.json ] || printf '{}' > /data/nh/server-config.json
 # Server-wide ratings store (see njs/nh-ratings.js); seed so first GET is valid JSON.
 [ -f /data/nh/ratings.json ] || printf '{"v":1,"items":{}}' > /data/nh/ratings.json
-# Community ratings store (#27), same seed so the first GET is valid JSON.
-[ -f /data/nh/community.json ] || printf '{"v":1,"items":{}}' > /data/nh/community.json
 chown -R nginx:nginx /data/nh
 
-echo "[nanohive-abs-theme] upstream=${ABS_UPSTREAM} version=${THEME_VERSION:-latest} theme=${NH_BASE_THEME} accent=${NH_ACCENT_COLOR}"
+echo "[nanohive-secure] upstream=${ABS_UPSTREAM} version=${THEME_VERSION:-latest} theme=${NH_BASE_THEME} accent=${NH_ACCENT_COLOR}"

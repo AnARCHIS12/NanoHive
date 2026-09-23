@@ -113,15 +113,7 @@
     st.textContent = css;
     (document.head || document.documentElement).appendChild(st);
 
-    var families = ['Spectral:wght@400;500;600;700'];
-    if (s.mainFont && s.mainFont.toLowerCase() !== 'spectral') {
-      families.push(s.mainFont.replace(/ /g, '+') + ':wght@400;500;600;700');
-    }
-    var fl = document.createElement('link');
-    fl.rel = 'stylesheet';
-    fl.id = 'nh-custom-font-link';
-    fl.href = 'https://fonts.googleapis.com/css2?family=' + families.join('&family=') + '&display=swap';
-    (document.head || document.documentElement).appendChild(fl);
+    // NanoHive Secure: zero external font requests
   } catch (e) {}
 
   // Logo: set the logo source URL early so core.js CSS has the mask ready
