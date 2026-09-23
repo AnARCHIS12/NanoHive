@@ -2751,8 +2751,9 @@ body.nh-selecting .nh-rp-badge { visibility: hidden !important; }
 #nh-booksites .nh-bs-group { font-family: var(--nh-sans, system-ui); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nh-muted-2, #9a9085); margin: 12px 0 6px; }
 #nh-booksites .nh-bs-group:first-child { margin-top: 0; }
 #nh-booksites .nh-bs-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 12px; }
-#nh-booksites .nh-bs-check { display: flex; align-items: center; gap: 8px; font-family: var(--nh-sans, system-ui); font-size: 0.85rem; color: var(--nh-text-2, #d8cfc2); cursor: pointer; padding: 3px 0; }
 #nh-booksites .nh-bs-check input { accent-color: var(--nh-amber, #e0c27a); width: 15px; height: 15px; cursor: pointer; }
+.nh-bs-btn[href*="amazon."], .nh-bs-btn[href*="audible."] { display: none !important; }
+#item-page-wrapper:has([cy-id="podcast-type"]) .nh-bs-row, #item-page-wrapper:has(.podcast-type) .nh-bs-row { display: none !important; }
 /* No late horizontal shift when a vertical scrollbar appears: reserve its space
    up front on the scrollers that hold grids. */
 #bookshelf, #page-wrapper, #app-content .page, .configContent { scrollbar-gutter: stable; }

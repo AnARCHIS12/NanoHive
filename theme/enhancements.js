@@ -4344,17 +4344,6 @@
     { id: 'bookmeter', name: 'Bookmeter', langs: ['ja'], url: 'https://bookmeter.com/search?keyword=' },
     { id: 'douban', name: 'Douban', langs: ['zh'], url: 'https://search.douban.com/book/subject_search?search_text=' },
     { id: 'kitap1000', name: '1000Kitap', langs: ['tr'], url: 'https://1000kitap.com/arama?q=' },
-    { id: 'amazon_com', name: 'Amazon.com', langs: ['en'], url: 'https://www.amazon.com/s?i=stripbooks&k=' },
-    { id: 'amazon_uk', name: 'Amazon.co.uk', langs: ['en'], url: 'https://www.amazon.co.uk/s?i=stripbooks&k=' },
-    { id: 'amazon_de', name: 'Amazon.de', langs: ['de'], url: 'https://www.amazon.de/s?i=stripbooks&k=' },
-    { id: 'amazon_pl', name: 'Amazon.pl', langs: ['pl'], url: 'https://www.amazon.pl/s?i=stripbooks&k=' },
-    { id: 'amazon_fr', name: 'Amazon.fr', langs: ['fr'], url: 'https://www.amazon.fr/s?i=stripbooks&k=' },
-    { id: 'amazon_es', name: 'Amazon.es', langs: ['es'], url: 'https://www.amazon.es/s?i=stripbooks&k=' },
-    { id: 'amazon_it', name: 'Amazon.it', langs: ['it'], url: 'https://www.amazon.it/s?i=stripbooks&k=' },
-    { id: 'amazon_nl', name: 'Amazon.nl', langs: ['nl'], url: 'https://www.amazon.nl/s?i=stripbooks&k=' },
-    { id: 'amazon_jp', name: 'Amazon.co.jp', langs: ['ja'], url: 'https://www.amazon.co.jp/s?i=stripbooks&k=' },
-    { id: 'amazon_br', name: 'Amazon.com.br', langs: ['pt'], url: 'https://www.amazon.com.br/s?i=stripbooks&k=' },
-    { id: 'audible', name: 'Audible', langs: ['*'], url: 'https://www.audible.com/search?keywords=' },
   ];
 
   function nhBookSiteById(id) { return NH_BOOK_SITES.filter((s) => s.id === id)[0] || null; }
@@ -4364,11 +4353,9 @@
   function nhBookSitesDefault() {
     const lang = getUserLanguage().split('-')[0].toLowerCase();
     const forLang = NH_BOOK_SITES.filter((s) => s.langs.indexOf(lang) !== -1);
-    // Prefer a real local book community (Lubimyczytać, Babelio…); fall back to
-    // that language's Amazon store, which is all some languages have here.
-    const local = forLang.filter((s) => s.id.indexOf('amazon') !== 0)[0] || forLang[0];
+    const local = forLang[0];
     const ids = ['goodreads'];
-    if (local) ids.push(local.id);
+    if (local && local.id !== 'goodreads') ids.push(local.id);
     return ids;
   }
   function nhBookSitesSelected() {
@@ -4379,11 +4366,34 @@
 
   // Site ids that have a bundled logo under theme/booksites (served at
   // /_nh/booksites/<id>.png). Anything not listed falls back to a monogram.
-  const NH_BS_LOGOS = ["amazon_br","amazon_com","amazon_de","amazon_es","amazon_fr","amazon_it","amazon_jp","amazon_nl","amazon_pl","amazon_uk","audible","babelio","bookmeter","casadellibro","databazeknih","douban","goodreads","hardcover","hebban","kitap1000","livelib","lovelybooks","lubimyczytac","moly","openlibrary","storygraph"];
+  const NH_BS_LOGOS = ["babelio","bookmeter","casadellibro","databazeknih","douban","goodreads","hardcover","hebban","kitap1000","livelib","lovelybooks","lubimyczytac","moly","openlibrary","storygraph"];
+
+  function isPodcastPage(wrapper) {
+    if (nhLibMediaType(nhCurLibId()) === 'podcast') return true;
+    try {
+      if (location.pathname.includes('/podcast/')) return true;
+      const st = window.$nuxt && window.$nuxt.$store;
+      const curItem = st && st.state && st.state.globals && st.state.globals.currentMediaItem;
+      if (curItem && (curItem.mediaType === 'podcast' || curItem.episodes)) return true;
+    } catch (e) {}
+    if (wrapper) {
+      if (wrapper.querySelector('[cy-id="podcast-type"]') || wrapper.textContent.includes('PODCAST TYPE') || wrapper.textContent.includes('Episodes')) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   function injectBookSites() {
     const wrapper = document.getElementById('item-page-wrapper');
     if (!wrapper) return;
+    if (isPodcastPage(wrapper)) {
+      const oldRow = wrapper.querySelector('.nh-bs-row');
+      if (oldRow) oldRow.remove();
+      const oldGr = wrapper.querySelector('a[data-nh-goodreads]');
+      if (oldGr) oldGr.remove();
+      return;
+    }
     const h1 = wrapper.querySelector('h1');
     if (!h1) return;
     // The primary action button is `.abs-btn`; only OLDER ABS builds also give
@@ -13846,7 +13856,7 @@
   // at-a-glance "what am I running" readout. Restore it and add the theme version.
   // Bump NH_THEME_VERSION on each release (the composite THEME_VERSION from NH_CONFIG is
   // shown on hover for exact per-file versions).
-  const NH_THEME_VERSION = 'v2.8.0';
+  const NH_THEME_VERSION = 'v2.8.1';
   const NH_RELEASE_URL = 'https://github.com/AnARCHIS12/NanoHive/releases';
   function nhAbsVersion() {
     try {

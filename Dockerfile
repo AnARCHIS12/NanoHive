@@ -36,7 +36,7 @@ RUN chmod +x /docker-entrypoint.d/05-check-env.sh && \
 
 # Restrict substitution to OUR vars so nginx's own $host/$http_upgrade survive.
 ENV NGINX_ENVSUBST_FILTER="^(ABS_UPSTREAM|THEME_VERSION|NH_[A-Z0-9_]+)$" \
-    THEME_VERSION="v2.8.0"
+    THEME_VERSION="v2.8.1"
 
 # --- Default appearance
 ENV NH_APP_NAME="" \
