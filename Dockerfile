@@ -55,7 +55,10 @@ ENV NH_APP_NAME="" \
     NH_SHOW_RATINGS="true" \
     NH_GLOBAL_SEARCH="true" \
     NH_PROXY_BUFFER_SIZE="16k" \
-    NH_FOUC_BG="#181512"
+    NH_FOUC_BG="#181512" \
+    NH_PUBLIC_MODE="false" \
+    NH_GUEST_USERNAME="guest" \
+    NH_GUEST_PASSWORD=""
 
 EXPOSE 80
 

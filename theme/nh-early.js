@@ -39,6 +39,34 @@
   // blob in localStorage. No id yet (logged out, first ever load) = the plain key.
   // (Kept byte-identical in intent to nhSettingsUid() in enhancements.js - if one
   // changes, change both, or the pre-paint and the app disagree about who you are.)
+  // --- Public Mode Auto-Guest Bootstrap ---
+  try {
+    var isPub = (SRV.publicMode !== undefined) ? !!SRV.publicMode : (CFG.publicMode === true || CFG.publicMode === 'true');
+    var isLoginPage = /^\/login\/?$/.test(location.pathname);
+    var wantAdmin = /[?&]admin=1/.test(location.search) || /admin/i.test(location.hash);
+    var existingTok = localStorage.getItem('token') || '';
+
+    if (isPub && !wantAdmin && (!existingTok || isLoginPage)) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', '/_nh/api/guest-session', false);
+      xhr.send(null);
+      if (xhr.status === 200) {
+        var res = JSON.parse(xhr.responseText || '{}');
+        if (res && res.ok && res.session && res.session.token) {
+          localStorage.setItem('token', res.session.token);
+          var vxInit = {};
+          try { vxInit = JSON.parse(localStorage.getItem('vuex') || '{}') || {}; } catch (err) {}
+          vxInit.user = { user: res.session.user, token: res.session.token };
+          localStorage.setItem('vuex', JSON.stringify(vxInit));
+          sessionStorage.setItem('nh_guest_active', '1');
+          if (isLoginPage) {
+            location.replace('/');
+          }
+        }
+      }
+    }
+  } catch (e) {}
+
   var settingsKey = 'nh-settings';
   try {
     var tok = localStorage.getItem('token') || '';

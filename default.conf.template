@@ -207,6 +207,23 @@ server {
         proxy_set_header Authorization $http_authorization;
     }
 
+    # Public Mode / Guest session API (njs)
+    location = /_nh/api/guest-session {
+        set $nh_public_mode "${NH_PUBLIC_MODE}";
+        set $nh_guest_username "${NH_GUEST_USERNAME}";
+        set $nh_guest_password "${NH_GUEST_PASSWORD}";
+        client_max_body_size 1k;
+        js_content nh_ratings.guestSession;
+    }
+
+    location = /_nh/internal-abs-login {
+        internal;
+        proxy_pass ${ABS_UPSTREAM}/login;
+        proxy_http_version 1.1;
+        proxy_set_header Content-Type "application/json";
+        proxy_set_header Accept "application/json";
+    }
+
     location / {
         proxy_pass ${ABS_UPSTREAM};
 
@@ -239,7 +256,7 @@ server {
 
         # Injected header and theme scripts (zéro polices externes Google Fonts)
         sub_filter '</head>'
-            '<style id="nh-fouc-blocker">html{background:${NH_FOUC_BG} !important;}body::after{content:"";position:fixed;inset:0;z-index:2147483000;background:radial-gradient(circle at 80% 0%,var(--nh-amber-shadow,rgba(224,194,122,0.30)) 0%,transparent 60%),radial-gradient(circle at 15% 100%,var(--nh-amber-tint,rgba(224,194,122,0.12)) 0%,transparent 55%),var(--nh-canvas,${NH_FOUC_BG});opacity:1;transition:opacity .45s ease;}html.nh-ready body::after{opacity:0;pointer-events:none;visibility:hidden;transition:opacity .45s ease,visibility 0s linear .5s;}body::before{content:"";position:fixed;top:50%;left:50%;width:38px;height:38px;margin:-19px 0 0 -19px;z-index:2147483001;border-radius:50%;border:3px solid var(--nh-amber-tint,rgba(224,194,122,0.14));border-top-color:var(--nh-amber,#e0c27a);box-shadow:0 0 28px var(--nh-amber-shadow,rgba(224,194,122,0.30));animation:nh-spin .9s linear infinite;transition:opacity .3s ease;}html.nh-ready body::before{opacity:0;visibility:hidden;animation:none;transition:opacity .3s ease,visibility 0s linear .35s;}@keyframes nh-spin{to{transform:rotate(360deg)}}</style><script>setTimeout(function(){document.documentElement.classList.add("nh-ready");},4000);</script><script>window.NH_CONFIG={"appName":"${NH_APP_NAME}","showLogoText":${NH_SHOW_LOGO_TEXT},"colorizeLogo":${NH_COLORIZE_LOGO},"logoUrl":"${NH_LOGO_URL}","accentColor":"${NH_ACCENT_COLOR}","baseTheme":"${NH_BASE_THEME}","mainFont":"${NH_MAIN_FONT}","fontScale":${NH_FONT_SCALE},"carouselTiming":${NH_CAROUSEL_TIMING},"showCustomRecentSeries":${NH_SHOW_RECENT_SERIES},"recentSeriesCount":${NH_RECENT_SERIES_COUNT},"customSeriesCards":${NH_CUSTOM_SERIES_CARDS},"showHeroCarousel":${NH_SHOW_HERO_CAROUSEL},"showRatings":${NH_SHOW_RATINGS},"globalSearch":${NH_GLOBAL_SEARCH},"themeVersion":"${THEME_VERSION}"};</script><script>window.NH_SERVER_CONFIG=<!--# include virtual="/_nh/server-config.json" -->;</script><script><!--# include virtual="/_nh/core.js" --></script><script><!--# include virtual="/_nh/nh-early.js" --></script></head>';
+            '<style id="nh-fouc-blocker">html{background:${NH_FOUC_BG} !important;}body::after{content:"";position:fixed;inset:0;z-index:2147483000;background:radial-gradient(circle at 80% 0%,var(--nh-amber-shadow,rgba(224,194,122,0.30)) 0%,transparent 60%),radial-gradient(circle at 15% 100%,var(--nh-amber-tint,rgba(224,194,122,0.12)) 0%,transparent 55%),var(--nh-canvas,${NH_FOUC_BG});opacity:1;transition:opacity .45s ease;}html.nh-ready body::after{opacity:0;pointer-events:none;visibility:hidden;transition:opacity .45s ease,visibility 0s linear .5s;}body::before{content:"";position:fixed;top:50%;left:50%;width:38px;height:38px;margin:-19px 0 0 -19px;z-index:2147483001;border-radius:50%;border:3px solid var(--nh-amber-tint,rgba(224,194,122,0.14));border-top-color:var(--nh-amber,#e0c27a);box-shadow:0 0 28px var(--nh-amber-shadow,rgba(224,194,122,0.30));animation:nh-spin .9s linear infinite;transition:opacity .3s ease;}html.nh-ready body::before{opacity:0;visibility:hidden;animation:none;transition:opacity .3s ease,visibility 0s linear .35s;}@keyframes nh-spin{to{transform:rotate(360deg)}}</style><script>setTimeout(function(){document.documentElement.classList.add("nh-ready");},4000);</script><script>window.NH_CONFIG={"appName":"${NH_APP_NAME}","showLogoText":${NH_SHOW_LOGO_TEXT},"colorizeLogo":${NH_COLORIZE_LOGO},"logoUrl":"${NH_LOGO_URL}","accentColor":"${NH_ACCENT_COLOR}","baseTheme":"${NH_BASE_THEME}","mainFont":"${NH_MAIN_FONT}","fontScale":${NH_FONT_SCALE},"carouselTiming":${NH_CAROUSEL_TIMING},"showCustomRecentSeries":${NH_SHOW_RECENT_SERIES},"recentSeriesCount":${NH_RECENT_SERIES_COUNT},"customSeriesCards":${NH_CUSTOM_SERIES_CARDS},"showHeroCarousel":${NH_SHOW_HERO_CAROUSEL},"showRatings":${NH_SHOW_RATINGS},"globalSearch":${NH_GLOBAL_SEARCH},"publicMode":${NH_PUBLIC_MODE},"guestUsername":"${NH_GUEST_USERNAME}","themeVersion":"${THEME_VERSION}"};</script><script>window.NH_SERVER_CONFIG=<!--# include virtual="/_nh/server-config.json" -->;</script><script><!--# include virtual="/_nh/core.js" --></script><script><!--# include virtual="/_nh/nh-early.js" --></script></head>';
 
         sub_filter '</body>'
             '<script><!--# include virtual="/_nh/enhancements.js" --></script><script><!--# include virtual="/_nh/book-details.js" --></script></body>';

@@ -43,6 +43,11 @@ No Tampermonkey, no per-browser setup: put it in front of your ABS server and it
 - Collections as instant icon grids, narrators and authors as proper cards
 - Series covers show how far through you are
 
+**Public / Guest Mode (Public Instance)**
+- Instant guest access: visitors browse and listen to public podcasts/audiobooks immediately without a login screen
+- Permission isolated: guests only see libraries explicitly assigned to the guest user in ABS (e.g. Podcasts)
+- Instant Admin Sign-in: owners can sign into their private accounts at any time via the "Connexion" appbar button or `/login?admin=1`
+
 ---
 
 ## Quick start
@@ -98,8 +103,36 @@ Direct your reverse proxy (or browser) to port `13379` instead of ABS directly.
 | `NH_RECENT_SERIES_COUNT` | `12` | Series in that shelf |
 | `NH_CUSTOM_SERIES_CARDS` | `true` | Stacked series covers, `false` = stock cards |
 | `NH_SHOW_RATINGS` | `true` | Local book ratings |
+| `NH_PUBLIC_MODE` | `false` | Enable guest mode for public instances |
+| `NH_GUEST_USERNAME` | `guest` | Audiobookshelf username for public visitors |
+| `NH_GUEST_PASSWORD` | *(empty)* | Password for the guest user account |
 | `NH_FOUC_BG` | `#181512` | Background before the theme loads, match your base theme |
 | `NH_PROXY_BUFFER_SIZE` | `16k` | Nginx upstream header buffer |
+
+---
+
+## Setting up a Public Instance (Podcast / Audiobooks)
+
+If you run a public instance (such as sharing podcasts or selected audiobooks with the world) while keeping your personal libraries private:
+
+1. **Create the Guest User in Audiobookshelf**:
+   - Go to your Audiobookshelf Admin Settings → **Users** → **Add User**.
+   - Set username to `guest` (or any username you choose) and a password.
+   - Under **Permissions**, grant access **only** to the libraries you want public (e.g. your Podcasts library). Leave all other checkboxes (delete, update, download, etc.) unchecked.
+
+2. **Enable Public Mode in NanoHive**:
+   - In `docker-compose.yml`:
+     ```yaml
+     environment:
+       - NH_PUBLIC_MODE=true
+       - NH_GUEST_USERNAME=guest
+       - NH_GUEST_PASSWORD=your_guest_password
+     ```
+   - *Alternatively*, log in as admin, open the Customization Panel (`Theme` button) → **Administration** tab → **Public / Guest Mode**, and toggle it on directly from the UI.
+
+3. **Visitor Experience & Admin Sign-in**:
+   - Any visitor opening your site is immediately granted a guest session and lands on your beautiful public podcast/audiobook catalog without seeing a login form.
+   - When you (the owner/admin) visit the site, click the amber **Connexion** / **Sign in** button in the top bar (or visit `/login?admin=1`) to sign into your private account.
 
 ---
 

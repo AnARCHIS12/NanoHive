@@ -483,6 +483,21 @@ volumes:
                 <td>Self-hosted internal book ratings and reviews system</td>
               </tr>
               <tr>
+                <td><code>NH_PUBLIC_MODE</code></td>
+                <td><code>"false"</code></td>
+                <td>Enable public/guest mode for anonymous browsing of public libraries</td>
+              </tr>
+              <tr>
+                <td><code>NH_GUEST_USERNAME</code></td>
+                <td><code>"guest"</code></td>
+                <td>Audiobookshelf username for public guests</td>
+              </tr>
+              <tr>
+                <td><code>NH_GUEST_PASSWORD</code></td>
+                <td><code>""</code></td>
+                <td>Audiobookshelf password for the guest user account</td>
+              </tr>
+              <tr>
                 <td><code>NH_PROXY_BUFFER_SIZE</code></td>
                 <td><code>"16k"</code></td>
                 <td>Nginx upstream header buffer (essential for large OIDC tokens)</td>

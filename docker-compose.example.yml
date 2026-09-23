@@ -33,6 +33,9 @@ services:
       # NH_SHOW_HERO_CAROUSEL: "true"
       # NH_SHOW_RATINGS: "true"      # local self-hosted ratings only
       # NH_GLOBAL_SEARCH: "true"
+      # NH_PUBLIC_MODE: "false"      # set to "true" to allow anonymous browsing of guest libraries
+      # NH_GUEST_USERNAME: "guest"   # user configured in ABS with restricted library permissions
+      # NH_GUEST_PASSWORD: ""        # password for the guest user
 
 # Point your browser or external TLS reverse proxy to port 13379
 volumes:

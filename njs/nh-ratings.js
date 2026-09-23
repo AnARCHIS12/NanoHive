@@ -520,4 +520,56 @@ function prefs(r) {
   send(r, 200, { ok: true, ts: store.users[user.id].ts });
 }
 
-export default { handle, meta, avatar, reports, dates, prefs };
+function guestSession(r) {
+  const srv = (function () {
+    try { return JSON.parse(fs.readFileSync('/data/nh/server-config.json')); } catch (e) { return {}; }
+  })();
+  const v = r.variables || {};
+  const isPublic = (srv.publicMode !== undefined) ? !!srv.publicMode : (v.nh_public_mode === 'true');
+  if (!isPublic) {
+    return send(r, 200, { ok: false, publicMode: false, error: 'public mode disabled' });
+  }
+
+  const guestUser = srv.guestUsername || v.nh_guest_username || 'guest';
+  const guestPass = srv.guestPassword || v.nh_guest_password || '';
+
+  if (!guestPass) {
+    return send(r, 200, { ok: false, publicMode: true, error: 'guest password not configured' });
+  }
+
+  const forceRefresh = r.args && (r.args.refresh === '1' || r.args.refresh === 'true');
+  const cached = (function () {
+    try { return JSON.parse(fs.readFileSync('/data/nh/guest-session.json')); } catch (e) { return null; }
+  })();
+  const now = Date.now();
+
+  if (!forceRefresh && cached && cached.token && cached.user && cached.user.username === guestUser && (now - (cached.updatedAt || 0) < 21600000)) {
+    return send(r, 200, { ok: true, publicMode: true, session: cached });
+  }
+
+  const loginPayload = JSON.stringify({ username: guestUser, password: guestPass });
+  r.subrequest('/_nh/internal-abs-login', { method: 'POST', body: loginPayload }, function (res) {
+    if (res.status === 200) {
+      try {
+        const data = JSON.parse(res.responseBody || '{}');
+        if (data && data.user && data.user.token) {
+          const session = {
+            token: data.user.token,
+            user: data.user,
+            userDefaultLibraryId: data.userDefaultLibraryId || '',
+            serverSettings: data.serverSettings || {},
+            updatedAt: Date.now()
+          };
+          try {
+            fs.writeFileSync('/data/nh/guest-session.json.tmp', JSON.stringify(session));
+            fs.renameSync('/data/nh/guest-session.json.tmp', '/data/nh/guest-session.json');
+          } catch (writeErr) {}
+          return send(r, 200, { ok: true, publicMode: true, session: session });
+        }
+      } catch (err) {}
+    }
+    return send(r, 200, { ok: false, publicMode: true, error: 'upstream login failed (status ' + res.status + ')' });
+  });
+}
+
+export default { handle, meta, avatar, reports, dates, prefs, guestSession };
