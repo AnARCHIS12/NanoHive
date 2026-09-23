@@ -56,7 +56,7 @@ services:
       - "80"
 
   abs-theme:
-    image: ghcr.io/rodzalendo/nanohive-abs-theme:latest
+    image: ghcr.io/anarchis12/nanohive:latest
     # Or build locally: build: .
     restart: unless-stopped
     depends_on:

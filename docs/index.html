@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NanoHive Secure Edition — Documentation Officielle</title>
-  <meta name="description" content="Documentation officielle de NanoHive Secure Edition : le thème souverain, durci et zéro fuite pour Audiobookshelf.">
+  <title>NanoHive Secure Edition — Official Documentation</title>
+  <meta name="description" content="Official documentation for NanoHive Secure Edition: the hardened, sovereign, zero-leak visual theme reverse proxy for Audiobookshelf.">
   <link rel="icon" type="image/png" href="nanohive-logo.png">
   <style>
     :root {
@@ -127,11 +127,15 @@
     .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 24px 0; }
     .feature-card {
       background: var(--bg-surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 20px; transition: border-color .2s;
+      border-radius: 12px; padding: 22px; transition: border-color .2s;
     }
     .feature-card:hover { border-color: rgba(224, 194, 122, 0.4); }
-    .feature-card h4 { font-size: 1.05rem; margin-bottom: 8px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
-    .feature-card p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0; line-height: 1.5; }
+    .feature-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .feature-card-icon {
+      width: 22px; height: 22px; color: var(--accent); flex-shrink: 0;
+    }
+    .feature-card h4 { font-size: 1.05rem; margin-bottom: 0; color: var(--accent); font-weight: 600; }
+    .feature-card p { font-size: 0.92rem; color: var(--text-muted); margin-bottom: 0; line-height: 1.55; }
 
     /* Callouts / Alerts */
     .callout {
@@ -208,7 +212,7 @@
   <!-- Header -->
   <header class="navbar">
     <div style="display: flex; align-items: center; gap: 14px;">
-      <button class="menu-toggle" id="menuToggle" aria-label="Ouvrir le menu">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
       <a href="#" class="brand">
@@ -219,13 +223,13 @@
 
     <div class="nav-search">
       <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-      <input type="text" id="searchInput" placeholder="Rechercher dans la documentation... (/)">
+      <input type="text" id="searchInput" placeholder="Search documentation... (/)">
     </div>
 
     <div class="nav-links">
-      <a href="#quickstart" class="nav-btn">Démarrage Rapide</a>
-      <a href="#security" class="nav-btn">Sécurité</a>
-      <a href="https://github.com/rodzalendo/nanohive-abs-theme" target="_blank" rel="noopener" class="btn-gh">
+      <a href="#quickstart" class="nav-btn">Quick Start</a>
+      <a href="#security" class="nav-btn">Security</a>
+      <a href="https://github.com/AnARCHIS12/NanoHive" target="_blank" rel="noopener" class="btn-gh">
         <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
         GitHub
       </a>
@@ -236,45 +240,45 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div>
-        <div class="sidebar-group-title">Pour Commencer</div>
+        <div class="sidebar-group-title">Getting Started</div>
         <ul class="sidebar-links">
-          <li><a href="#intro" class="sidebar-link active">Présentation</a></li>
-          <li><a href="#differences" class="sidebar-link">Différences avec l'original</a></li>
-          <li><a href="#quickstart" class="sidebar-link">Démarrage Rapide</a></li>
+          <li><a href="#intro" class="sidebar-link active">Overview</a></li>
+          <li><a href="#differences" class="sidebar-link">Differences from Upstream</a></li>
+          <li><a href="#quickstart" class="sidebar-link">Quick Start</a></li>
         </ul>
       </div>
 
       <div>
-        <div class="sidebar-group-title">Configuration & Déploiement</div>
+        <div class="sidebar-group-title">Configuration & Deployment</div>
         <ul class="sidebar-links">
           <li><a href="#compose" class="sidebar-link">Docker Compose (Port 13379)</a></li>
-          <li><a href="#env-vars" class="sidebar-link">Variables d'Environnement</a></li>
+          <li><a href="#env-vars" class="sidebar-link">Environment Variables</a></li>
           <li><a href="#reverse-proxy" class="sidebar-link">Reverse Proxy & OIDC</a></li>
         </ul>
       </div>
 
       <div>
-        <div class="sidebar-group-title">Sécurité & Architecture</div>
+        <div class="sidebar-group-title">Security & Architecture</div>
         <ul class="sidebar-links">
-          <li><a href="#security" class="sidebar-link">Garantie Zero-Leak</a></li>
-          <li><a href="#removals" class="sidebar-link">Composants Supprimés</a></li>
-          <li><a href="#data" class="sidebar-link">Stockage & Persistance (/data/nh)</a></li>
+          <li><a href="#security" class="sidebar-link">Zero-Leak Guarantee</a></li>
+          <li><a href="#removals" class="sidebar-link">Removed Components</a></li>
+          <li><a href="#data" class="sidebar-link">Storage & Persistence (/data/nh)</a></li>
         </ul>
       </div>
 
       <div>
-        <div class="sidebar-group-title">Personnalisation</div>
+        <div class="sidebar-group-title">Customization</div>
         <ul class="sidebar-links">
-          <li><a href="#themes" class="sidebar-link">Les 12 Thèmes Graphiques</a></li>
-          <li><a href="#custom-logo" class="sidebar-link">Logo Personnalisé</a></li>
-          <li><a href="#gallery" class="sidebar-link">Aperçus de l'Interface</a></li>
+          <li><a href="#themes" class="sidebar-link">12 Base Themes</a></li>
+          <li><a href="#custom-logo" class="sidebar-link">Custom Logo</a></li>
+          <li><a href="#gallery" class="sidebar-link">Interface Gallery</a></li>
         </ul>
       </div>
 
       <div>
-        <div class="sidebar-group-title">Aide & Support</div>
+        <div class="sidebar-group-title">Help & Troubleshooting</div>
         <ul class="sidebar-links">
-          <li><a href="#faq" class="sidebar-link">FAQ & Dépannage</a></li>
+          <li><a href="#faq" class="sidebar-link">FAQ & Troubleshooting</a></li>
         </ul>
       </div>
     </aside>
@@ -286,83 +290,95 @@
       <section id="intro">
         <h1>NanoHive Secure Edition</h1>
         <p>
-          <strong>NanoHive Secure Edition</strong> est un reverse proxy d'habillage visuel autonome pour 
+          <strong>NanoHive Secure Edition</strong> is a standalone visual styling reverse proxy for 
           <a href="https://www.audiobookshelf.org" target="_blank" rel="noopener" style="color: var(--accent);">Audiobookshelf (ABS)</a>.
-          Il injecte un thème moderne et soigné directement dans les pages web d'Audiobookshelf sans modifier ni altérer votre serveur ABS source.
+          It injects a refined, cinematic theme directly into web interface pages without modifying or touching your underlying Audiobookshelf server.
         </p>
 
         <div class="callout security">
           <div class="callout-title">
             <svg width="18" height="18" fill="var(--success)" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
-            Édition Durcie & Privée
+            Hardened & Sovereign Edition
           </div>
-          Cette édition a été purgée de toute dépendance tierce indiscrète (abs-tract, scraping Goodreads, synchronisation Hardcover, Google Fonts, télémétrie sociale). Elle fonctionne <strong>100% hors-ligne en circuit fermé</strong>.
+          This edition has been thoroughly purged of third-party network dependencies (abs-tract daemon, Goodreads scraping, Hardcover synchronization, Google Fonts, cross-user listening tracking). It operates in a <strong>strict closed-circuit, 100% offline-ready mode</strong>.
         </div>
 
         <div class="grid-2">
           <div class="feature-card">
-            <h4>🎨 Look Cinématique</h4>
-            <p>12 palettes de thèmes sombres raffinées, couleurs d'accentuation sur-mesure, typographie système native haute lisibilité.</p>
+            <div class="feature-card-header">
+              <svg class="feature-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M14.31 8l5.74 9.94M9.69 8h11.48M7.38 12l5.74-9.94M9.69 16L3.95 6.06M14.31 16H2.83M16.62 12l-5.74 9.94"/></svg>
+              <h4>Cinematic Aesthetics</h4>
+            </div>
+            <p>12 refined dark palettes, custom hex accent colors, and native high-legibility system typography.</p>
           </div>
           <div class="feature-card">
-            <h4>🛡️ Zéro Fuite Réseau</h4>
-            <p>Aucun appel externe vers Google Fonts ou des CDNs. Content Security Policy (CSP) stricte bloquant toute tentative sortante.</p>
+            <div class="feature-card-header">
+              <svg class="feature-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <h4>Zero Network Leaks</h4>
+            </div>
+            <p>No external calls to Google Fonts or public CDNs. Strict Content Security Policy (CSP) blocking any unauthorized outbound request.</p>
           </div>
           <div class="feature-card">
-            <h4>⚡ Port Isolé 13379</h4>
-            <p>Aucun risque de conflit avec le port générique saturé 8080. Se cale naturellement à côté du port officiel ABS (13378).</p>
+            <div class="feature-card-header">
+              <svg class="feature-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+              <h4>Isolated Port 13379</h4>
+            </div>
+            <p>No port collisions with overloaded port 8080. Placed immediately next to Audiobookshelf default port 13378.</p>
           </div>
           <div class="feature-card">
-            <h4>📱 Réactivité Mobile Totale</h4>
-            <p>Menu tiroir optimisé, boutons adaptés au tactile, navigation fluide et pas de débordement d'éléments.</p>
+            <div class="feature-card-header">
+              <svg class="feature-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+              <h4>Full Mobile Responsiveness</h4>
+            </div>
+            <p>Optimized drawer navigation, touch-friendly controls, fluid responsive scaling, and zero horizontal overflow.</p>
           </div>
         </div>
       </section>
 
       <!-- Section: Differences -->
       <section id="differences">
-        <h2>Différences avec le NanoHive Original</h2>
-        <p>Le projet upstream d'origine comprenait de multiples fonctionnalités superflues et bavardes sur le réseau. Voici un comparatif direct :</p>
+        <h2>Differences from Upstream NanoHive</h2>
+        <p>The original upstream repository contained several telemetry features and third-party network scrapers. Here is the direct architectural comparison:</p>
 
         <div class="table-wrapper">
           <table>
             <thead>
               <tr>
-                <th>Fonctionnalité</th>
-                <th>NanoHive Upstream (Original)</th>
+                <th>Feature</th>
+                <th>Upstream NanoHive</th>
                 <th>NanoHive Secure Edition</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><strong>Port hôte par défaut</strong></td>
-                <td><code>8080</code> (conflits récurrents)</td>
-                <td><strong style="color: var(--success);"><code>13379</code></strong> (dédié et sans collision)</td>
+                <td><strong>Default Host Port</strong></td>
+                <td><code>8080</code> (common conflict)</td>
+                <td><strong style="color: var(--success);"><code>13379</code></strong> (dedicated & conflict-free)</td>
               </tr>
               <tr>
-                <td><strong>Polices de caractères</strong></td>
-                <td>Requêtes à <code>fonts.googleapis.com</code></td>
-                <td><strong style="color: var(--success);">Polices système natives (Zéro requête externe)</strong></td>
+                <td><strong>Web Fonts</strong></td>
+                <td>External calls to <code>fonts.googleapis.com</code></td>
+                <td><strong style="color: var(--success);">Native System Fonts (Zero external queries)</strong></td>
               </tr>
               <tr>
-                <td><strong>Scraper Goodreads (abs-tract)</strong></td>
-                <td>Conteneur Go + scraping Amazon/Goodreads</td>
-                <td><strong style="color: var(--success);">Supprimé à 100%</strong></td>
+                <td><strong>Goodreads Scraper (abs-tract)</strong></td>
+                <td>Go daemon + Amazon/Goodreads background scraping</td>
+                <td><strong style="color: var(--success);">Completely Removed</strong></td>
               </tr>
               <tr>
-                <td><strong>Relais Hardcover</strong></td>
-                <td>Relais Nginx GraphQL vers <code>api.hardcover.app</code></td>
-                <td><strong style="color: var(--success);">Supprimé à 100%</strong></td>
+                <td><strong>Hardcover Relay</strong></td>
+                <td>Nginx GraphQL relay to <code>api.hardcover.app</code></td>
+                <td><strong style="color: var(--success);">Completely Removed</strong></td>
               </tr>
               <tr>
-                <td><strong>Partage social d'écoute</strong></td>
-                <td>Collecte et partage de "qui lit quoi" entre comptes</td>
-                <td><strong style="color: var(--success);">Désactivé / Purgé (Vie privée préservée)</strong></td>
+                <td><strong>Social Listening Tracking</strong></td>
+                <td>Tracks and shares listening progress across users</td>
+                <td><strong style="color: var(--success);">Disabled & Purged (Privacy Preserved)</strong></td>
               </tr>
               <tr>
-                <td><strong>Headers de sécurité</strong></td>
-                <td>Basiques</td>
-                <td><strong style="color: var(--success);">CSP stricte, X-Frame-Options, no-sniff</strong></td>
+                <td><strong>Security Headers</strong></td>
+                <td>Basic configuration</td>
+                <td><strong style="color: var(--success);">Strict CSP, X-Frame-Options, X-Content-Type-Options</strong></td>
               </tr>
             </tbody>
           </table>
@@ -371,105 +387,105 @@
 
       <!-- Section: Quickstart -->
       <section id="quickstart">
-        <h2>Démarrage Rapide</h2>
-        <p>Le déploiement prend moins de deux minutes via Docker Compose. Il vous suffit d'insérer le conteneur devant votre serveur Audiobookshelf.</p>
+        <h2>Quick Start</h2>
+        <p>Deployment takes under two minutes using Docker Compose. Simply position the proxy container in front of your Audiobookshelf instance.</p>
 
-        <div class="code-container">
+        <div class="code-container" id="compose">
           <div class="code-header">
             <span>docker-compose.yml</span>
-            <button class="btn-copy" onclick="copyCode(this)">Copier</button>
+            <button class="btn-copy" onclick="copyCode(this)">Copy</button>
           </div>
           <pre><code>services:
   audiobookshelf:
     image: ghcr.io/advplyr/audiobookshelf:latest
     restart: unless-stopped
     expose:
-      - "80" # Pas besoin de publier sur l'hôte si seul le thème dialogue avec
+      - "80" # Internal container port, no need to expose to host if using proxy
 
   abs-theme:
-    image: ghcr.io/rodzalendo/nanohive-abs-theme:latest
-    # Ou compilation locale : build: .
+    image: ghcr.io/anarchis12/nanohive:latest
+    # Or build locally: build: .
     restart: unless-stopped
     depends_on:
       - audiobookshelf
     ports:
-      - "13379:80" # Port d'accès web du thème
+      - "13379:80" # Web access port
     volumes:
       - nh_theme_data:/data/nh
     environment:
       ABS_UPSTREAM: "http://audiobookshelf:80"
-      NH_APP_NAME: "Ma Bibliothèque"
+      NH_APP_NAME: "My Library"
       NH_BASE_THEME: "warm"
 
 volumes:
   nh_theme_data:</code></pre>
         </div>
 
-        <p>Lancez le conteneur en arrière-plan :</p>
+        <p>Start the containers in the background:</p>
         <div class="code-container">
           <div class="code-header">
             <span>Terminal</span>
-            <button class="btn-copy" onclick="copyCode(this)">Copier</button>
+            <button class="btn-copy" onclick="copyCode(this)">Copy</button>
           </div>
           <pre><code>docker compose up -d</code></pre>
         </div>
-        <p>Ouvrez ensuite votre navigateur sur <code>http://IP_DE_VOTRE_SERVEUR:13379</code>.</p>
+        <p>Access your enhanced web library at <code>http://YOUR_SERVER_IP:13379</code>.</p>
       </section>
 
       <!-- Section: Env Vars -->
       <section id="env-vars">
-        <h2>Variables d'Environnement</h2>
-        <p>Toutes les variables sont optionnelles à l'exception de <code>ABS_UPSTREAM</code> :</p>
+        <h2>Environment Variables</h2>
+        <p>All environment variables are optional except for <code>ABS_UPSTREAM</code>:</p>
 
         <div class="table-wrapper">
           <table>
             <thead>
               <tr>
                 <th>Variable</th>
-                <th>Défaut</th>
+                <th>Default</th>
                 <th>Description</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td><code>ABS_UPSTREAM</code></td>
-                <td><em>Requis</em></td>
-                <td>Adresse de votre serveur Audiobookshelf (ex: <code>http://audiobookshelf:80</code>)</td>
+                <td><em>Required</em></td>
+                <td>Address of your Audiobookshelf server (e.g. <code>http://audiobookshelf:80</code>)</td>
               </tr>
               <tr>
                 <td><code>NH_APP_NAME</code></td>
                 <td><code>""</code></td>
-                <td>Nom de votre bibliothèque affiché en haut à gauche</td>
+                <td>Custom library title displayed in the top-left corner</td>
               </tr>
               <tr>
                 <td><code>NH_BASE_THEME</code></td>
                 <td><code>"warm"</code></td>
-                <td>Thème de base (<code>warm</code>, <code>slate</code>, <code>black</code>, <code>navy</code>, <code>mocha</code>, <code>pine</code>, etc.)</td>
+                <td>Default theme (<code>warm</code>, <code>slate</code>, <code>black</code>, <code>navy</code>, <code>mocha</code>, <code>pine</code>, etc.)</td>
               </tr>
               <tr>
                 <td><code>NH_ACCENT_COLOR</code></td>
                 <td><code>"#e0c27a"</code></td>
-                <td>Couleur d'accentuation en code hexadécimal</td>
+                <td>Primary accent color in hexadecimal format</td>
               </tr>
               <tr>
                 <td><code>NH_MAIN_FONT</code></td>
                 <td><code>"system-ui"</code></td>
-                <td>Pile typographique système native</td>
+                <td>Typography stack (defaults to system UI font)</td>
               </tr>
               <tr>
                 <td><code>NH_SHOW_HERO_CAROUSEL</code></td>
                 <td><code>"true"</code></td>
-                <td>Affichage du carrousel de vos écoutes en cours</td>
+                <td>Display the hero carousel of currently playing items on home screen</td>
               </tr>
               <tr>
                 <td><code>NH_SHOW_RATINGS</code></td>
                 <td><code>"true"</code></td>
-                <td>Système de notes et d'avis internes auto-hébergés</td>
+                <td>Self-hosted internal book ratings and reviews system</td>
               </tr>
               <tr>
                 <td><code>NH_PROXY_BUFFER_SIZE</code></td>
                 <td><code>"16k"</code></td>
-                <td>Taille des tampons d'en-tête (indispensable pour l'authentification OIDC lourde)</td>
+                <td>Nginx upstream header buffer (essential for large OIDC tokens)</td>
               </tr>
             </tbody>
           </table>
@@ -478,43 +494,102 @@ volumes:
 
       <!-- Section: Security -->
       <section id="security">
-        <h2>Garantie Zero-Leak & Sécurité</h2>
-        <p>NanoHive Secure Edition a été conçu selon le principe de défense en profondeur :</p>
+        <h2>Zero-Leak Guarantee & Security</h2>
+        <p>NanoHive Secure Edition follows defense-in-depth security principles:</p>
 
-        <h3>1. Content Security Policy (CSP) Stricte</h3>
-        <p>Le reverse-proxy Nginx renvoie pour chaque page servie une directive CSP stricte :</p>
+        <h3>1. Strict Content Security Policy (CSP)</h3>
+        <p>The internal Nginx proxy enforces a restrictive CSP header on every served response:</p>
         <div class="code-container">
           <div class="code-header">
             <span>Nginx Header</span>
           </div>
           <pre><code>Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ws: wss:; media-src 'self' blob:; frame-ancestors 'self';</code></pre>
         </div>
-        <p>Même si un script tentait d'établir une connexion réseau externe, <strong>le navigateur web la bloquera instantanément</strong>.</p>
+        <p>Even if any script attempts an external connection, <strong>the browser automatically blocks it</strong>.</p>
 
-        <h3>2. Authentification Server-Side via ABS</h3>
+        <h3>2. Server-Side Authentication Verification</h3>
         <p>
-          Toutes les requêtes vers l'API interne du thème (<code>/_nh/api/</code>) sont vérifiées au niveau de Nginx via la directive <code>auth_request</code>. 
-          Le jeton Bearer JWT de l'utilisateur est rejoué auprès de l'endpoint <code>/api/me</code> d'Audiobookshelf. Il est impossible de poster des notes ou de modifier des paramètres sans être authentifié par ABS.
+          All API requests to the theme endpoints (<code>/_nh/api/</code>) are validated by Nginx using <code>auth_request</code>. 
+          The user Bearer token is validated against Audiobookshelf's <code>/api/me</code> endpoint. Unauthenticated clients cannot modify ratings, settings, or metadata.
         </p>
+      </section>
+
+      <!-- Section: Removals -->
+      <section id="removals">
+        <h2>Removed Components</h2>
+        <p>To guarantee complete privacy and reliability, the following elements were completely excised:</p>
+        <ul>
+          <li><strong>abs-tract daemon</strong>: The auxiliary Go service that scraped Goodreads was deleted.</li>
+          <li><strong>Google Fonts preconnects</strong>: Typography now relies exclusively on clean local system fonts.</li>
+          <li><strong>Hardcover GraphQL proxy</strong>: Neutralized along with all related upstream network configurations.</li>
+          <li><strong>Cross-user listening statistics</strong>: Internal tracking of progress across accounts was decommissioned.</li>
+        </ul>
+      </section>
+
+      <!-- Section: Data -->
+      <section id="data">
+        <h2>Storage & Persistence (/data/nh)</h2>
+        <p>All persistent state is stored cleanly inside the mounted volume at <code>/data/nh</code>:</p>
+        <ul>
+          <li><code>ratings.json</code>: Internal star ratings and written reviews.</li>
+          <li><code>config.json</code>: Server-wide display preferences and active toggles.</li>
+          <li><code>logo.png</code>: Optional custom library branding logo.</li>
+          <li><code>series-covers/</code>: Cached custom artwork for series collections.</li>
+        </ul>
+      </section>
+
+      <!-- Section: Themes -->
+      <section id="themes">
+        <h2>The 12 Built-in Themes</h2>
+        <p>NanoHive includes 12 carefully balanced dark palettes:</p>
+        <div class="grid-2">
+          <div class="feature-card">
+            <h4>Warm & Amber</h4>
+            <p><code>warm</code>, <code>sand</code>, <code>mocha</code>: Rich, cozy tones inspired by classic reading rooms and paperbacks.</p>
+          </div>
+          <div class="feature-card">
+            <h4>Deep & Neutral</h4>
+            <p><code>black</code>, <code>slate</code>, <code>steel</code>: High-contrast minimalist themes tailored for OLED displays.</p>
+          </div>
+          <div class="feature-card">
+            <h4>Atmospheric Colors</h4>
+            <p><code>navy</code>, <code>ocean</code>, <code>pine</code>: Cool midnight blues and tranquil deep forest greens.</p>
+          </div>
+          <div class="feature-card">
+            <h4>Velvet Accents</h4>
+            <p><code>plum</code>, <code>crimson</code>, <code>wine</code>: Luxurious berry, ruby, and royal purple hues.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Custom Logo -->
+      <section id="custom-logo">
+        <h2>Custom Logo Branding</h2>
+        <p>You can easily substitute the default logo with your own:</p>
+        <ol>
+          <li>Place your PNG image at <code>/data/nh/logo.png</code> in the mounted volume.</li>
+          <li>Or specify an image URL/path with the <code>NH_LOGO_URL</code> environment variable.</li>
+          <li>Reload your browser page to view your custom branding.</li>
+        </ol>
       </section>
 
       <!-- Section: Reverse Proxy -->
       <section id="reverse-proxy">
         <h2>Reverse Proxy & OIDC</h2>
-        <p>Si vous placez NanoHive derrière un reverse-proxy HTTPS (Nginx Proxy Manager, Traefik, Caddy, Cloudflare Tunnels) :</p>
+        <p>When running NanoHive behind an external reverse proxy (Nginx Proxy Manager, Traefik, Caddy, Cloudflare Tunnels):</p>
         
         <div class="callout">
-          <div class="callout-title">Support OIDC Garanti</div>
-          NanoHive préserve fidèlement l'en-tête <code>X-Forwarded-Proto</code> d'origine. Les connexions via OpenID Connect (Google, Authentik, Keycloak) ne génèrent plus d'erreur de callback d'origine croisée.
+          <div class="callout-title">Preserved OIDC Support</div>
+          NanoHive faithfully forwards the incoming <code>X-Forwarded-Proto</code> header. Single Sign-On (Google, Authentik, Keycloak) callbacks function seamlessly without protocol mismatch errors.
         </div>
 
-        <p>Exemple de configuration <strong>Caddy</strong> :</p>
+        <p>Example <strong>Caddy</strong> configuration:</p>
         <div class="code-container">
           <div class="code-header">
             <span>Caddyfile</span>
-            <button class="btn-copy" onclick="copyCode(this)">Copier</button>
+            <button class="btn-copy" onclick="copyCode(this)">Copy</button>
           </div>
-          <pre><code>livres.mondomaine.com {
+          <pre><code>audiobooks.mydomain.com {
     reverse_proxy localhost:13379
 }</code></pre>
         </div>
@@ -522,47 +597,47 @@ volumes:
 
       <!-- Section: Gallery -->
       <section id="gallery">
-        <h2>Aperçus de l'Interface</h2>
+        <h2>Interface Gallery</h2>
         <div class="gallery">
           <div class="gallery-item">
-            <img src="main.png" alt="Page d'accueil">
-            <div class="gallery-caption">Page d'accueil avec carrousel cinématique</div>
+            <img src="main.png" alt="Home Screen">
+            <div class="gallery-caption">Home view with cinematic hero carousel</div>
           </div>
           <div class="gallery-item">
-            <img src="book.png" alt="Fiche de livre">
-            <div class="gallery-caption">Fiche livre détaillée avec jaquette HD</div>
+            <img src="book.png" alt="Book View">
+            <div class="gallery-caption">Detailed book page with high-res cover backdrop</div>
           </div>
           <div class="gallery-item">
-            <img src="series.png" alt="Vue Séries">
-            <div class="gallery-caption">Cartes de séries avec suivi de progression</div>
+            <img src="series.png" alt="Series View">
+            <div class="gallery-caption">Series cards featuring progress indicators</div>
           </div>
           <div class="gallery-item">
             <img src="collections.png" alt="Collections">
-            <div class="gallery-caption">Grille de collections personnalisées</div>
+            <div class="gallery-caption">Custom collections displayed as clean card grids</div>
           </div>
           <div class="gallery-item">
-            <img src="narrators.png" alt="Narrateurs">
-            <div class="gallery-caption">Fiches narrateurs et auteurs</div>
+            <img src="narrators.png" alt="Narrators">
+            <div class="gallery-caption">Dedicated author and narrator index cards</div>
           </div>
           <div class="gallery-item">
-            <img src="settings2.png" alt="Panneau de configuration">
-            <div class="gallery-caption">Panneau de personnalisation intégré</div>
+            <img src="settings2.png" alt="Settings Panel">
+            <div class="gallery-caption">Built-in theme personalization drawer</div>
           </div>
         </div>
       </section>
 
       <!-- Section: FAQ -->
       <section id="faq">
-        <h2>FAQ & Dépannage</h2>
+        <h2>FAQ & Troubleshooting</h2>
 
-        <h3>Pourquoi avoir choisi le port 13379 ?</h3>
-        <p>Le port standard officiel d'Audiobookshelf est <code>13378</code>. Utiliser <code>13379</code> évite toute collision avec les nombreuses applications qui accaparent <code>8080</code> (Traefik, Tomcat, Pi-hole, etc.).</p>
+        <h3>Why port 13379?</h3>
+        <p>Audiobookshelf defaults to port <code>13378</code>. Utilizing <code>13379</code> avoids port collisions with common tools that occupy <code>8080</code> (Traefik, Tomcat, Pi-hole, web development servers).</p>
 
-        <h3>Les applications mobiles ABS fonctionnent-elles toujours ?</h3>
-        <p><strong>Oui.</strong> L'application mobile Audiobookshelf sur Android et iOS communique directement avec l'API standard d'Audiobookshelf à travers le proxy sans aucune altération.</p>
+        <h3>Do native mobile ABS apps still connect?</h3>
+        <p><strong>Yes.</strong> The Audiobookshelf mobile apps on Android and iOS connect directly to Audiobookshelf API endpoints through the proxy without any interference.</p>
 
-        <h3>Où sont stockées les données du thème ?</h3>
-        <p>Toutes les données (vos notes internes, vos jaquettes de séries personnalisées, votre logo) sont stockées dans le volume persistant <code>/data/nh</code>.</p>
+        <h3>Where are theme preferences stored?</h3>
+        <p>All persistent user configurations, ratings, and custom covers reside securely in the local Docker volume at <code>/data/nh</code>.</p>
       </section>
 
     </main>
@@ -570,7 +645,7 @@ volumes:
 
   <!-- Footer -->
   <footer>
-    <p>NanoHive Secure Edition — Distribué sous licence MIT. Indépendant du projet Audiobookshelf officiel.</p>
+    <p>NanoHive Secure Edition — Distributed under the MIT License. Independent from the official Audiobookshelf project.</p>
   </footer>
 
   <script>
@@ -579,7 +654,7 @@ volumes:
       const pre = btn.closest('.code-container').querySelector('pre');
       navigator.clipboard.writeText(pre.innerText).then(() => {
         const original = btn.innerText;
-        btn.innerText = 'Copié !';
+        btn.innerText = 'Copied!';
         btn.style.borderColor = 'var(--success)';
         btn.style.color = 'var(--success)';
         setTimeout(() => {

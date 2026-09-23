@@ -2,38 +2,38 @@ services:
   audiobookshelf:
     image: ghcr.io/advplyr/audiobookshelf:latest
     restart: unless-stopped
-    # ...votre configuration ABS normale (volumes, etc.)...
-    # Aucun port exposé publiquement si seul le proxy du thème communique avec.
+    # ...standard Audiobookshelf configuration (volumes, etc.)...
+    # No exposed host ports needed if the theme proxy handles all client traffic.
     expose:
       - "80"
 
   abs-theme:
-    image: ghcr.io/rodzalendo/nanohive-abs-theme:latest
-    # Ou build local:  build: .
+    image: ghcr.io/anarchis12/nanohive:latest
+    # Or build locally: build: .
     restart: unless-stopped
     depends_on:
       - audiobookshelf
     ports:
       - "13379:80"
     volumes:
-      # Volume persistant pour les données locales du thème :
-      # logos, jaquettes de séries, préférences et notes internes éventuelles.
+      # Persistent storage for local theme data:
+      # custom logo, series covers, server preferences, local ratings.
       - nh_theme_data:/data/nh
     environment:
       ABS_UPSTREAM: "http://audiobookshelf:80"
 
-      # Paramètres optionnels par défaut :
-      # NH_APP_NAME: "Ma Bibliothèque"
+      # Optional parameters:
+      # NH_APP_NAME: "My Library"
       # NH_ACCENT_COLOR: "#e0c27a"
       # NH_BASE_THEME: "warm"        # warm slate black navy mocha pine plum crimson ocean sand steel wine
       # NH_FONT_SCALE: "1.0"
-      # NH_CAROUSEL_TIMING: "15"     # secondes par slide hero ; 0 désactive le défilement auto
+      # NH_CAROUSEL_TIMING: "15"     # seconds per hero slide; 0 disables auto-advance
       # NH_RECENT_SERIES_COUNT: "12"
       # NH_CUSTOM_SERIES_CARDS: "true"
       # NH_SHOW_HERO_CAROUSEL: "true"
-      # NH_SHOW_RATINGS: "true"      # notes locales internes uniquement
+      # NH_SHOW_RATINGS: "true"      # local self-hosted ratings only
       # NH_GLOBAL_SEARCH: "true"
 
-# Dirigez votre navigateur / reverse-proxy TLS vers le conteneur abs-theme (port 13379)
+# Point your browser or external TLS reverse proxy to port 13379
 volumes:
   nh_theme_data:
