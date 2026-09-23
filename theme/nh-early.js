@@ -163,26 +163,29 @@
   // showing it. Disabling the stock links and inserting ours here, still
   // inside <head>, before first paint, is what makes the custom logo stick.
   try {
-    if (logoUrl) {
-      var head = document.head || document.documentElement;
-      // REMOVE the stock icon links rather than renaming their rel: Firefox
-      // keeps painting a renamed one, so a refresh landed back on the default.
-      var links = document.querySelectorAll('link[rel*="icon"]');
-      // Remembered so enhancements.js can put them back when the custom logo
-      // is cleared (or turns out invalid) without a reload (#28).
-      var stock = window.__nhFavStock = window.__nhFavStock || [];
-      for (var li = links.length - 1; li >= 0; li--) {
-        if (links[li].id === 'nh-favicon') continue;
-        stock.unshift({ rel: links[li].rel, href: links[li].getAttribute('href'), type: links[li].getAttribute('type'), sizes: links[li].getAttribute('sizes') });
-        if (links[li].parentNode) links[li].parentNode.removeChild(links[li]);
-      }
-      if (!document.getElementById('nh-favicon')) {
-        var fl2 = document.createElement('link');
-        fl2.id = 'nh-favicon';
-        fl2.rel = 'icon';
-        fl2.href = logoUrl;
-        head.appendChild(fl2);
-      }
+    var defaultFav = '/_nh/favicon.png';
+    var favTarget = logoUrl || defaultFav;
+    var head = document.head || document.documentElement;
+    // REMOVE the stock icon links rather than renaming their rel: Firefox
+    // keeps painting a renamed one, so a refresh landed back on the default.
+    var links = document.querySelectorAll('link[rel*="icon"]');
+    // Remembered so enhancements.js can put them back when the custom logo
+    // is cleared (or turns out invalid) without a reload (#28).
+    var stock = window.__nhFavStock = window.__nhFavStock || [];
+    for (var li = links.length - 1; li >= 0; li--) {
+      if (links[li].id === 'nh-favicon') continue;
+      stock.unshift({ rel: links[li].rel, href: links[li].getAttribute('href'), type: links[li].getAttribute('type'), sizes: links[li].getAttribute('sizes') });
+      if (links[li].parentNode) links[li].parentNode.removeChild(links[li]);
+    }
+    var existingFav = document.getElementById('nh-favicon');
+    if (!existingFav) {
+      var fl2 = document.createElement('link');
+      fl2.id = 'nh-favicon';
+      fl2.rel = 'icon';
+      fl2.href = favTarget;
+      head.appendChild(fl2);
+    } else if (favTarget && existingFav.getAttribute('href') !== favTarget) {
+      existingFav.href = favTarget;
     }
   } catch (e) {}
 

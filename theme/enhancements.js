@@ -372,7 +372,7 @@
     if (appName && /audiobookshelf/i.test(document.title)) {
       document.title = document.title.replace(/audiobookshelf/ig, appName);
     }
-    const fav = nhLogoOk(nhSettings.logoUrl);
+    const fav = nhLogoOk(nhSettings.logoUrl) || '/_nh/favicon.png';
     let favHref = fav;
     if (fav && nhSettings.colorizeLogo) {
       // match the colorized appbar logo: same accent tint, done on canvas

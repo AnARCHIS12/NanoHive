@@ -253,6 +253,7 @@
         <ul class="sidebar-links">
           <li><a href="#compose" class="sidebar-link">Docker Compose (Port 13379)</a></li>
           <li><a href="#env-vars" class="sidebar-link">Environment Variables</a></li>
+          <li><a href="#public-mode" class="sidebar-link">Public / Guest Mode</a></li>
           <li><a href="#reverse-proxy" class="sidebar-link">Reverse Proxy & OIDC</a></li>
         </ul>
       </div>
@@ -270,7 +271,7 @@
         <div class="sidebar-group-title">Customization</div>
         <ul class="sidebar-links">
           <li><a href="#themes" class="sidebar-link">12 Base Themes</a></li>
-          <li><a href="#custom-logo" class="sidebar-link">Custom Logo</a></li>
+          <li><a href="#custom-logo" class="sidebar-link">Custom Logo & Favicon</a></li>
           <li><a href="#gallery" class="sidebar-link">Interface Gallery</a></li>
         </ul>
       </div>
@@ -507,6 +508,55 @@ volumes:
         </div>
       </section>
 
+      <!-- Section: Public / Guest Mode -->
+      <section id="public-mode">
+        <h2>Public / Guest Mode (Public Podcasts & Audiobooks Instance)</h2>
+        <p>
+          Running an open Audiobookshelf instance to share public podcasts or curated audiobooks freely with the world without exposing your personal libraries is now turnkey.
+        </p>
+
+        <div class="callout security">
+          <div class="callout-title">
+            <svg width="18" height="18" fill="var(--success)" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+            Zero-Friction Browsing with Native Audiobookshelf Permissions
+          </div>
+          Visitors land directly on your library and can play podcasts immediately without facing an Audiobookshelf login form. Private libraries remain completely hidden, governed strictly by Audiobookshelf's internal user permission model.
+        </div>
+
+        <h3>How to Setup in 3 Simple Steps</h3>
+        <ol>
+          <li>
+            <strong>Create the Guest Account in Audiobookshelf:</strong>
+            <p>Go to your Audiobookshelf Admin Settings → <strong>Users</strong> → <strong>Add User</strong>. Create an account (e.g. username <code>guest</code> with a secure password). Under <strong>Permissions</strong>, check <em>only</em> your public libraries (e.g. Podcasts), and ensure all administrative, delete, and download rights are unchecked.</p>
+          </li>
+          <li>
+            <strong>Configure NanoHive:</strong>
+            <p>Either add the environment variables in your <code>docker-compose.yml</code>:</p>
+            <div class="code-container">
+              <div class="code-header">
+                <span>docker-compose.yml</span>
+                <button class="btn-copy" onclick="copyCode(this)">Copy</button>
+              </div>
+              <pre><code>environment:
+  - ABS_UPSTREAM=http://audiobookshelf:80
+  - NH_PUBLIC_MODE=true
+  - NH_GUEST_USERNAME=guest
+  - NH_GUEST_PASSWORD=your_guest_password</code></pre>
+            </div>
+            <p>Or configure it dynamically from the web UI: sign in as admin, click the <strong>Theme</strong> button → <strong>Administration</strong> tab → <strong>Public / Guest Mode</strong>, enter credentials and save.</p>
+          </li>
+          <li>
+            <strong>Seamless Owner Sign-in:</strong>
+            <p>Whenever you (the instance owner or an authorized user) need to log into your private account, simply click the amber <strong>Connexion / Sign in</strong> button in the top navigation bar (or visit <code>/login?admin=1</code>). This bypasses the guest auto-bootstrap and presents the standard login form.</p>
+          </li>
+        </ol>
+
+        <div class="callout">
+          <div class="callout-title">Security & Credential Protection</div>
+          The guest password is <strong>never transmitted to client browsers</strong>. NanoHive's internal Nginx JavaScript module (NJS) performs an internal subrequest to Audiobookshelf's <code>/login</code> endpoint, issues a scoped guest bearer token, and caches it securely for 6 hours.
+        </div>
+      </section>
+
       <!-- Section: Security -->
       <section id="security">
         <h2>Zero-Leak Guarantee & Security</h2>
@@ -577,15 +627,28 @@ volumes:
         </div>
       </section>
 
-      <!-- Section: Custom Logo -->
+      <!-- Section: Custom Logo & Favicon -->
       <section id="custom-logo">
-        <h2>Custom Logo Branding</h2>
-        <p>You can easily substitute the default logo with your own:</p>
+        <h2>Custom Logo & Favicon</h2>
+        <p>NanoHive includes complete visual identity and browser tab branding out of the box:</p>
+
+        <h3>1. Default NanoHive Favicon</h3>
+        <p>
+          NanoHive comes pre-bundled with its official golden hexagon icon. The proxy automatically serves it at <code>/_nh/favicon.png</code> and intercepts direct browser requests for <code>/favicon.ico</code>, <code>/favicon-32x32.png</code>, and <code>apple-touch-icon.png</code> so your browser tabs display the theme icon immediately instead of the stock blue bookshelf icon.
+        </p>
+
+        <h3>2. Custom Logo Branding</h3>
+        <p>You can easily substitute the default logo and favicon with your own custom artwork:</p>
         <ol>
-          <li>Place your PNG image at <code>/data/nh/logo.png</code> in the mounted volume.</li>
+          <li>Place your PNG or ICO image at <code>/data/nh/logo.png</code> in the mounted volume.</li>
           <li>Or specify an image URL/path with the <code>NH_LOGO_URL</code> environment variable.</li>
-          <li>Reload your browser page to view your custom branding.</li>
+          <li>Reload your browser page: both the top-left appbar logo and the browser tab favicon will update automatically.</li>
         </ol>
+
+        <h3>3. Dynamic Accent Tinting</h3>
+        <p>
+          When <code>NH_COLORIZE_LOGO=true</code> is enabled (or toggled in the Customizations panel), the logo and browser tab favicon are dynamically rendered onto an HTML5 canvas and tinted to match your chosen accent color in real time.
+        </p>
       </section>
 
       <!-- Section: Reverse Proxy -->
