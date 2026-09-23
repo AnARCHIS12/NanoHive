@@ -85,8 +85,17 @@ server {
         return 200 '{"v":1,"cols":{}}';
     }
 
-    # Favicon overrides: intercept direct requests for favicon.ico and favicon.png
+    # Favicon overrides: direct browser requests for favicon.ico, favicon.png, apple-touch-icon
+    # First checks if user mounted a custom /data/nh/favicon.png, otherwise falls back to built-in favicon
     location ~* ^/(favicon\.ico|favicon\.png|favicon-\d+x\d+\.png|apple-touch-icon.*\.png)$ {
+        alias /data/nh/favicon.png;
+        error_page 404 = /_nh/favicon.png;
+        add_header Cache-Control "public, max-age=300";
+        add_header Content-Type "image/png";
+        access_log off;
+    }
+
+    location = /_nh/favicon.png {
         alias /usr/share/nginx/nh-theme/favicon.png;
         add_header Cache-Control "public, max-age=86400";
         add_header Content-Type "image/png";
