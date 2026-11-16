@@ -1,10 +1,10 @@
 # --- stage 1: minify the theme payload ---------------------------------
-FROM --platform=$BUILDPLATFORM node:22.14.0-alpine AS themebuild
+FROM --platform=$BUILDPLATFORM node:22.23.5-alpine AS themebuild
 ARG NH_MINIFY=true
 WORKDIR /src
 COPY theme/ ./theme/
 RUN if [ "$NH_MINIFY" = "true" ]; then \
-      npm install --silent --no-audit --no-fund --no-package-lock esbuild@0.24.2 && \
+      npm install --silent --no-audit --no-fund --no-package-lock esbuild@0.28.2 && \
       for f in core.js enhancements.js book-details.js nh-early.js; do \
         hdr=$(head -n 1 "theme/$f" | sed 's|/\*||; s|\*/||; s|^ *||; s| *$||'); \
         printf '/* %s */\n' "$hdr" > "/tmp/banner-$f"; \
@@ -16,7 +16,7 @@ RUN if [ "$NH_MINIFY" = "true" ]; then \
     else echo "NH_MINIFY=false - shipping readable sources"; fi
 
 # --- stage 2: hardened runtime ---------------------------------------
-FROM nginx:1.27.4-alpine
+FROM nginx:1.31.8-alpine
 
 # Theme payload, served at /_nh/ and inlined into HTML via SSI
 COPY --from=themebuild /src/theme/ /usr/share/nginx/nh-theme/
@@ -36,7 +36,7 @@ RUN chmod +x /docker-entrypoint.d/05-check-env.sh && \
 
 # Restrict substitution to OUR vars so nginx's own $host/$http_upgrade survive.
 ENV NGINX_ENVSUBST_FILTER="^(ABS_UPSTREAM|THEME_VERSION|NH_[A-Z0-9_]+)$" \
-    THEME_VERSION="v2.8.1"
+    THEME_VERSION="v2.8.2"
 
 # --- Default appearance
 ENV NH_APP_NAME="" \

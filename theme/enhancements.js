@@ -13856,7 +13856,7 @@
   // at-a-glance "what am I running" readout. Restore it and add the theme version.
   // Bump NH_THEME_VERSION on each release (the composite THEME_VERSION from NH_CONFIG is
   // shown on hover for exact per-file versions).
-  const NH_THEME_VERSION = 'v2.8.1';
+  const NH_THEME_VERSION = 'v2.8.2';
   const NH_RELEASE_URL = 'https://github.com/AnARCHIS12/NanoHive/releases';
   function nhAbsVersion() {
     try {
