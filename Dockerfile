@@ -1,5 +1,5 @@
 # --- stage 1: minify the theme payload ---------------------------------
-FROM --platform=$BUILDPLATFORM node:22.23.5-alpine AS themebuild
+FROM --platform=$BUILDPLATFORM node:26.13.1-alpine AS themebuild
 ARG NH_MINIFY=true
 WORKDIR /src
 COPY theme/ ./theme/
