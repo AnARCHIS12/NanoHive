@@ -16,7 +16,7 @@ RUN if [ "$NH_MINIFY" = "true" ]; then \
     else echo "NH_MINIFY=false - shipping readable sources"; fi
 
 # --- stage 2: hardened runtime ---------------------------------------
-FROM nginx:1.31.8-alpine
+FROM nginx:1.31.9-alpine
 
 # Theme payload, served at /_nh/ and inlined into HTML via SSI
 COPY --from=themebuild /src/theme/ /usr/share/nginx/nh-theme/
